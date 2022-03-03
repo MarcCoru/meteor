@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static', filename='style.css') }}">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.3/jquery.min.js"></script>
+
+<svg width="960" height="600" preserveAspectRatio="xMidYMid meet"></svg>
+
+<div id="update"></div>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<script type="text/javascript">
+
+    var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+    var associations = {
+        "cat0":null,
+        "cat1":null,
+        "cat2":null,
+        "cat3":null,
+    };
+    var radius=48;
+
+
+function arrayRemove(arr, value) {
+    return arr.filter(function(ele){
+        return ele != value;
+    });
+}
+
+//draw_rectangles(svg)
+
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+var collideForce = d3.forceCollide().radius(function(d) {return radius});
+var linkForce = d3.forceLink().id(function(d) { return d.id; }).strength(0.1);
+var centerForce = d3.forceCenter(width / 2, height / 2);
+
+var simulation = d3.forceSimulation().alphaDecay(0.001)
+    .force("link", linkForce)
+    .force("collision", collideForce)
+    .force("center", centerForce);
+
+var classes = ["class0","class1","class2","class3"];
+var class_counter = 0;
+var available_classes = ["class0","class1","class2","class3"];
+var active_classes = [];
+var nodes = null;
+var links = null;
+var link_phase = false; // if true the assigned nodes are excluded from moving in ticked;
+
+
+
+
+d3.json("/get_nodes", function(error, graph) {
+  if (error) throw error;
+
+  nodes = graph
+
+  var node = svg.append("g")
+      .attr("class", "nodes")
+    .selectAll("g")
+    .data(graph.nodes)
+    .enter().append("g");
+
+
+
+  svg.append('clipPath')
+   .attr('id','clipObj')
+        .append('circle')
+         .attr('cx',radius/2)
+         .attr('cy',radius/2)
+         .attr('r',radius);
+
+  //var circles = node.append("circle")
+    //.attr("r", radius)
+    //.attr("fill", function(d) { return color(d.group); })
+  var circles = node.append("image")
+      //.attr("xlink:href", "get_rgb_image?path=fall/1/Grassland/p176bl")
+      .attr("xlink:href", function(d) { return d.href; })
+      .attr("x", -radius/2)
+      .attr("y", -radius/2)
+      .attr("width", 2*radius)
+      .attr("height", 2*radius)
+      .attr('clip-path','url(#clipObj)');
+
+    /*
+    var circles = node.append("circle")
+         .attr('cx',radius/2)
+         .attr('cy',radius/2)
+         .attr('r', radius+1)
+         .style('fill', "none")
+         .style('stroke-width', 2)
+         .style('stroke', "black");
+    */
+    var circles_border = node.append("circle")
+     .attr('cx',radius/2)
+     .attr('cy',radius/2)
+     .attr('r', radius+3)
+     .attr('class', "circle");
+
+    circles_border.on("click", function(d) {
+      var el = d3.select(this);
+
+      console.log(el.attr("class").replace("circle ",""))
+
+      // if class already assigned to one of the classes
+      if (classes.includes(el.attr("class").replace("circle ",""))){
+          var classid = el.attr("class").replace("circle ","")
+          console.log(classid)
+
+          // update lists
+          arrayRemove(active_classes, classid)
+          available_classes.push(classid)
+
+          el.attr("class", "circle") // reset to no class in the element
+
+      }
+      else{
+          if(available_classes.length > 0){
+              var classid = available_classes.pop();
+              el.attr("class", "circle "+classid);
+              active_classes.push(classid)
+          }
+      }
+      class_counter += 1
+
+        updateInfo()
+    });
+
+  // Create a drag handler and append it to the node object instead
+  var drag_handler = d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
+
+  drag_handler(node);
+
+  node.append("title")
+      .text(function(d) { return d.classname; });
+
+  simulation
+      .nodes(graph.nodes)
+      .on("tick", ticked);
+
+  function ticked() {
+
+    node
+        .attr("transform", function(d) {
+            // frame detection
+            x = Math.max(2*radius, Math.min(width - 2*radius, d.x));
+            y = Math.max(2*radius, Math.min(height - 2*radius, d.y));
+          return "translate(" + x + "," + y + ")";
+        })
+  }
+
+
+});
+
+function updateInfo(){
+    $("#update").html("available classes: " + available_classes + " active classes: " + active_classes)
+}
+
+function between(min, p, max){
+  result = false;
+
+  if ( min < max ){
+    if ( p > min && p < max ){
+      result = true;
+    }
+  }
+
+  if ( min > max ){
+    if ( p > max && p < min){
+      result = true
+    }
+  }
+
+  if ( p == min || p == max ){
+    result = true;
+  }
+
+  return result;
+}
+
+function point_in_rectangle( x, y, left, top, right, bottom){
+  result = false;
+
+  if ( between(left,x,right) && between(top,y,bottom ) ){
+    result = true;
+  }
+  return result;
+}
+
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.x = d.x;
+  d.y = d.y;
+}
+
+function dragged(d) {
+  d.x = d3.event.x;
+  d.y = d3.event.y;
+}
+
+function dragended(d) {
+    if (!d3.event.active) simulation.alphaTarget(0);
+    d.x = d.x;
+    d.y = d.y;
+    /*
+
+    d.fx = d.x;
+    d.fy = d.y;
+
+     */
+}
+
+function add_force_links(data){
+    links = data.links;
+    simulation.force("link").links(links);
+}
+
+updateInfo()
+</script>
