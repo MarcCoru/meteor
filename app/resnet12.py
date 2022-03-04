@@ -405,8 +405,6 @@ class ResNet(MetaModule):
 
             if layer_norm:
                 norm = nn.GroupNorm(planes * block.expansion, planes * block.expansion)
-            elif tasknorm:
-                norm = TaskNormI(planes * block.expansion)
             else:
                 norm = MetaBatchNorm2d(planes * block.expansion, track_running_stats=track_running_stats)
 

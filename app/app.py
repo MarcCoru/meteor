@@ -7,6 +7,8 @@ from torch.nn.functional import cross_entropy
 
 from dfcdataset import DFCDataset, get_rgb
 from transforms import get_classification_transform
+from resnet12 import prepare_classification_model
+from bagofmaml import BagOfMAML
 
 regions = [('KippaRing', 'winter'),
            ('MexicoCity', 'winter'),
@@ -42,7 +44,7 @@ def get_nodes():
     for i, idx in zip(range(N), idxs):
         row = ds.index.loc[ds.index["index"] == idx]
         node = {
-            "id": str(i),
+            "id": str(idx),
             "classname": str(all_classnames[row.maxclass-1]),
             "href":"/get_rgb_image?idx="+str(idx)
         }
@@ -81,36 +83,49 @@ def generate_links(data):
     nodes = data["nodes"]
     associations = data["associations"]
 
-    def href_to_h5path(href):
-        """parse /get_rgb_image?path=spring/58/Savanna/p607tr to spring/58/Savanna/p607tr"""
-        return href.split("?")[-1].split("=")[-1]
 
-    h5paths = [href_to_h5path(n["href"]) for n in nodes["nodes"]]
-    ids = [n["id"] for n in nodes["nodes"]]
+    prepare_classification_model(1, inplanes=13, resnet=True, norm="layernorm")
 
-    batch = get_batch(h5paths)
+    model = prepare_classification_model(1, inplanes=13, resnet=True, norm="layernorm")
+    model.load_state_dict(torch.load("model/model_best.pth"))
 
-    # split batch into support and query based on associations
-    support_ids = list(associations.values())
-    support_idxs =  [ids.index(support_id) for support_id in support_ids]
+    bag = BagOfMAML(model, 1, first_order=True, verbose=True)
 
-    query_ids = [id for id in ids if id not in support_ids]
-    query_idxs = [ids.index(query_id) for query_id in query_ids]
+    classvalues = [int(v) for v in associations.values()]
 
-    support_batch = batch[support_idxs]
-    query_batch = batch[query_idxs]
+    X_query = []
+    X_support, y_support = [], []
+    for node in nodes["nodes"]:
+        idx = int(node["id"])
+        x, y = ds[idx]
+        X_query.append(x)
+        if idx in classvalues:
+            X_support.append(x)
+            y_support.append(classvalues.index(idx))
 
-    train_logit = model(support_batch.float())
-    inner_loss = cross_entropy(train_logit, torch.arange(4))
+    X_query = torch.stack(X_query)
+    X_support = torch.stack(X_support)
+    y_support = torch.tensor(y_support)
 
-    model.zero_grad()
-    params = update_parameters(model, inner_loss,
-                               inner_step_size=inner_step_size, first_order=False)
+    bag.fit(X_support, y_support)
+    predictions, y_score = bag.predict(X_query)
 
-    test_logit = model(query_batch.float(), params=params)
+    query_idxs = [int(n["id"]) for n in nodes["nodes"]]
 
-    test_prediction = test_logit.argmax(1)
+    links = []
+    for i, support_id in enumerate(classvalues):
+        for j, (query_id, pred) in enumerate(zip(query_idxs, predictions)):
+            if support_id != query_id:
+                if pred == i:
+                    links.append(
+                        {
+                            "source": support_id,
+                            "target": query_id,
+                            "value": float(y_score[i,j])
+                        }
+                    )
 
+    """
     links = []
     for prediction, target in zip(test_prediction, query_ids):
         source = support_ids[prediction]
@@ -121,7 +136,7 @@ def generate_links(data):
                 "value": 1
             }
         )
-
+    """
     return links
 
 if __name__ == '__main__':

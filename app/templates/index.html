@@ -12,17 +12,10 @@
 
 <script type="text/javascript">
 
-    var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
-    var associations = {
-        "cat0":null,
-        "cat1":null,
-        "cat2":null,
-        "cat3":null,
-    };
-    var radius=48;
-
+var svg = d3.select("svg"),
+width = +svg.attr("width"),
+height = +svg.attr("height");
+var radius=48;
 
 function arrayRemove(arr, value) {
     return arr.filter(function(ele){
@@ -50,8 +43,7 @@ var active_classes = [];
 var nodes = null;
 var links = null;
 var link_phase = false; // if true the assigned nodes are excluded from moving in ticked;
-
-
+var payload = {};
 
 
 d3.json("/get_nodes", function(error, graph) {
@@ -104,16 +96,17 @@ d3.json("/get_nodes", function(error, graph) {
     circles_border.on("click", function(d) {
       var el = d3.select(this);
 
-      console.log(el.attr("class").replace("circle ",""))
+      console.log(el.attr("class").replace("circle ",""));
+      console.log(d.id)
 
       // if class already assigned to one of the classes
       if (classes.includes(el.attr("class").replace("circle ",""))){
           var classid = el.attr("class").replace("circle ","")
-          console.log(classid)
 
           // update lists
           arrayRemove(active_classes, classid)
           available_classes.push(classid)
+          delete payload[classid]
 
           el.attr("class", "circle") // reset to no class in the element
 
@@ -123,11 +116,12 @@ d3.json("/get_nodes", function(error, graph) {
               var classid = available_classes.pop();
               el.attr("class", "circle "+classid);
               active_classes.push(classid)
+              payload[classid] = d.id
           }
       }
-      class_counter += 1
-
-        updateInfo()
+      class_counter += 1;
+      updateInfo();
+      check_request_links();
     });
 
   // Create a drag handler and append it to the node object instead
@@ -160,7 +154,7 @@ d3.json("/get_nodes", function(error, graph) {
 });
 
 function updateInfo(){
-    $("#update").html("available classes: " + available_classes + " active classes: " + active_classes)
+    $("#update").html("available classes: " + available_classes + " active classes: " + active_classes + " payload "+ JSON.stringify(payload))
 }
 
 function between(min, p, max){
@@ -183,6 +177,23 @@ function between(min, p, max){
   }
 
   return result;
+}
+
+function check_request_links() {
+    if (Object.keys(payload).length >= 2){
+        data = {
+               "nodes": nodes,
+                "associations": payload
+            }
+
+            $.ajax({
+                url: "/request_links",
+                type: 'POST',
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(data),
+                success: add_force_links});
+    }
 }
 
 function point_in_rectangle( x, y, left, top, right, bottom){
