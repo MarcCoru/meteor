@@ -28,8 +28,13 @@ inner_step_size = 0.32
 
 transform = get_classification_transform(s2only=True)
 ds = DFCDataset(dfcpath="/data/sen12ms/DFC_Public_Dataset", region=regions[3], transform=transform)
-
+device = "cuda"
 N = 18
+
+model = prepare_classification_model(1, inplanes=13, resnet=True, norm="layernorm")
+model.load_state_dict(torch.load("model/model_best.pth"))
+
+bag = BagOfMAML(model, 1, first_order=True, verbose=True, device=device, batch_size=2)
 
 @app.route('/')
 def index():
@@ -83,14 +88,6 @@ def generate_links(data):
     nodes = data["nodes"]
     associations = data["associations"]
 
-
-    prepare_classification_model(1, inplanes=13, resnet=True, norm="layernorm")
-
-    model = prepare_classification_model(1, inplanes=13, resnet=True, norm="layernorm")
-    model.load_state_dict(torch.load("model/model_best.pth"))
-
-    bag = BagOfMAML(model, 1, first_order=True, verbose=True)
-
     classvalues = [int(v) for v in associations.values()]
 
     X_query = []
@@ -107,8 +104,8 @@ def generate_links(data):
     X_support = torch.stack(X_support)
     y_support = torch.tensor(y_support)
 
-    bag.fit(X_support, y_support)
-    predictions, y_score = bag.predict(X_query)
+    bag.fit(X_support.to(device), y_support)
+    predictions, y_score = bag.predict(X_query.to(device))
 
     query_idxs = [int(n["id"]) for n in nodes["nodes"]]
 
@@ -117,11 +114,12 @@ def generate_links(data):
         for j, (query_id, pred) in enumerate(zip(query_idxs, predictions)):
             if support_id != query_id:
                 if pred == i:
+                    v = float(y_score.cpu()[i,j])
                     links.append(
                         {
                             "source": support_id,
                             "target": query_id,
-                            "value": float(y_score[i,j])
+                            "value": v
                         }
                     )
 

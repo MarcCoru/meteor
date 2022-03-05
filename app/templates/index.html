@@ -28,12 +28,14 @@ function arrayRemove(arr, value) {
 var color = d3.scaleOrdinal(d3.schemeCategory20);
 
 var collideForce = d3.forceCollide().radius(function(d) {return radius});
-var linkForce = d3.forceLink().id(function(d) { return d.id; }).strength(0.1);
+var linkForce = d3.forceLink().id(function(d) { return d.id; }).strength(0.01);
 var centerForce = d3.forceCenter(width / 2, height / 2);
 
 var simulation = d3.forceSimulation().alphaDecay(0.001)
     .force("link", linkForce)
-    .force("collision", collideForce)
+    //.force("collision", collideForce)
+    .force("charge", d3.forceManyBody().strength(-10))
+    .force("radial", d3.forceRadial(150, width / 2, height / 2).strength(0.01))
     .force("center", centerForce);
 
 var classes = ["class0","class1","class2","class3"];
@@ -42,7 +44,6 @@ var available_classes = ["class0","class1","class2","class3"];
 var active_classes = [];
 var nodes = null;
 var links = null;
-var link_phase = false; // if true the assigned nodes are excluded from moving in ticked;
 var payload = {};
 
 
@@ -206,7 +207,7 @@ function point_in_rectangle( x, y, left, top, right, bottom){
 }
 
 function dragstarted(d) {
-  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  //if (!d3.event.active) simulation.alphaTarget(0.3).restart();
   d.x = d.x;
   d.y = d.y;
 }
@@ -217,7 +218,7 @@ function dragged(d) {
 }
 
 function dragended(d) {
-    if (!d3.event.active) simulation.alphaTarget(0);
+    //if (!d3.event.active) simulation.alphaTarget(0);
     d.x = d.x;
     d.y = d.y;
     /*
