@@ -44,6 +44,19 @@ def get_rgb(s2):
 
     return rgb
 
+def split_support(ds, shots):
+
+    classes, counts = np.unique(ds.index.maxclass, return_counts=True)
+    classes = classes[counts > 2 * shots]
+
+    supports = []
+    for c in classes:
+        samples = ds.index.loc[ds.index.maxclass == c].reset_index()
+        support = samples.sample(shots)
+        supports.append(support)
+
+    return pd.concat(supports)
+
 class DFCDataset(Dataset):
     def __init__(self, dfcpath, region, transform):
         super(DFCDataset, self).__init__()

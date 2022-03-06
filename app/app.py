@@ -5,7 +5,7 @@ from PIL import Image
 import torch
 from torch.nn.functional import cross_entropy
 
-from dfcdataset import DFCDataset, get_rgb
+from dfcdataset import DFCDataset, get_rgb, split_support
 from transforms import get_classification_transform
 from resnet12 import prepare_classification_model
 from bagofmaml import BagOfMAML
@@ -43,7 +43,8 @@ def index():
 @app.route("/get_nodes")
 def get_nodes():
 
-    idxs = ds.index["index"].sample(N).values
+    support = split_support(ds, shots=3)
+    idxs = support["index"]
 
     nodes = []
     for i, idx in zip(range(N), idxs):
