@@ -174,7 +174,7 @@ def prepare_classification_model(nclasses, inplanes=15, resnet=True, norm="tbn",
 
     else:
         model = ConvolutionalNeuralNetwork(inplanes, nclasses, input_size=128, hidden_size=64,
-                                       inner_update_lr_init=None, no_batchnorm=no_batchnorm)
+                                       inner_update_lr_init=None, no_batchnorm=False)
     return model
 
 def prepare_segmentation_model(nclasses):
