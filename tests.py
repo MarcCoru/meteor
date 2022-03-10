@@ -3,7 +3,7 @@ from bagofmaml import BagOfMAML, BagOfMAMLEnsemble
 from bagofmaml.models import ResNet, get_model
 import torch
 
-IMAGE_H, IMAGE_W = 128, 128
+IMAGE_H, IMAGE_W = 32, 32
 BATCH_SIZE = 10
 N_CLASSES = 3
 NUM_MEMBERS = 3
