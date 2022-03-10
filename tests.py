@@ -17,18 +17,18 @@ class Tests(unittest.TestCase):
         self.assertEqual(logits.shape, torch.Size([BATCH_SIZE,1]))
 
     def test_get_model(self):
-        model = get_model("maml_rgb")
+        model = get_model("maml_resnet12_rgb")
         self.assertFalse(model(torch.ones(1, 3, IMAGE_H, IMAGE_W)).isnan().any(), "NANs in model predictions")
 
-        model = get_model("maml_s1s2")
+        model = get_model("maml_resnet12_s1s2")
         self.assertFalse(model(torch.ones(1, 15, IMAGE_H, IMAGE_W)).isnan().any(), "NANs in model predictions")
 
-        model = get_model("maml_s2")
+        model = get_model("maml_resnet12_s2")
         self.assertFalse(model(torch.ones(1, 13, IMAGE_H, IMAGE_W)).isnan().any(), "NANs in model predictions")
 
     def test_bagofmaml(self):
 
-        basemodel = get_model("maml_rgb")
+        basemodel = get_model("maml_resnet12_rgb")
         bag = BagOfMAML(basemodel)
 
         bag.fit(torch.rand(BATCH_SIZE, 3, IMAGE_H, IMAGE_W), torch.randint(N_CLASSES, (BATCH_SIZE,)))
@@ -37,7 +37,7 @@ class Tests(unittest.TestCase):
 
     def test_bagofmamlensemble(self):
 
-        basemodel = get_model("maml_rgb")
+        basemodel = get_model("maml_resnet12_rgb")
         bag = BagOfMAMLEnsemble(basemodel, num_members=NUM_MEMBERS)
 
         bag.fit(torch.rand(BATCH_SIZE, 3, IMAGE_H, IMAGE_W), torch.randint(N_CLASSES, (BATCH_SIZE,)))
