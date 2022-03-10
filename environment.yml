@@ -1,0 +1,48 @@
+name: bagofmaml
+channels:
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=main
+  - _openmp_mutex=4.5=1_gnu
+  - ca-certificates=2022.2.1=h06a4308_0
+  - certifi=2021.10.8=py37h06a4308_2
+  - flake8=4.0.1=pyhd3eb1b0_0
+  - importlib-metadata=4.8.2=py37h06a4308_0
+  - importlib_metadata=4.8.2=hd3eb1b0_0
+  - ld_impl_linux-64=2.35.1=h7274673_9
+  - libffi=3.3=he6710b0_2
+  - libgcc-ng=9.3.0=h5101ec6_17
+  - libgomp=9.3.0=h5101ec6_17
+  - libstdcxx-ng=9.3.0=hd4cf53a_17
+  - mccabe=0.6.1=py37_1
+  - ncurses=6.3=h7f8727e_2
+  - openssl=1.1.1m=h7f8727e_0
+  - pip=21.2.2=py37h06a4308_0
+  - pycodestyle=2.7.0=pyhd3eb1b0_0
+  - pyflakes=2.3.1=pyhd3eb1b0_0
+  - python=3.7.11=h12debd9_0
+  - readline=8.1.2=h7f8727e_1
+  - setuptools=58.0.4=py37h06a4308_0
+  - sqlite=3.37.2=hc218d9a_0
+  - tk=8.6.11=h1ccaba5_0
+  - typing_extensions=3.10.0.2=pyh06a4308_0
+  - wheel=0.37.1=pyhd3eb1b0_0
+  - xz=5.2.5=h7b6447c_0
+  - zipp=3.7.0=pyhd3eb1b0_0
+  - zlib=1.2.11=h7f8727e_4
+  - pip:
+    - cached-property==1.5.2
+    - charset-normalizer==2.0.12
+    - h5py==3.6.0
+    - idna==3.3
+    - numpy==1.21.5
+    - ordered-set==4.1.0
+    - pillow==9.0.1
+    - requests==2.27.1
+    - torch==1.9.1
+    - torchmeta==1.8.0
+    - torchvision==0.10.1
+    - tqdm==4.63.0
+    - typing-extensions==4.1.1
+    - urllib3==1.26.8
+prefix: /home/marc/anaconda3/envs/bagofmaml
