@@ -1,15 +1,18 @@
 from collections import OrderedDict
-from torch import nn
-import torch.nn.functional as F
-import torch
 import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import nn
+
 
 class BagOfMAML(nn.Module):
-    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu", batch_size=8, activation="softmax", seed=0):
+    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu",
+                 batch_size=8, activation="softmax", seed=0):
         super(BagOfMAML, self).__init__()
 
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+        self.seed = seed
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
 
         self.model = model.to(device)
         self.ways = 1
@@ -21,14 +24,15 @@ class BagOfMAML(nn.Module):
         self.device = device
         self.activation = activation
 
-
-
         self.labels = None
         self.batch_size = batch_size
 
     def fit(self, X, Y):
         self.labels = np.unique(Y)
         self.model.train()
+
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
 
         # to be filled by self.fit()
         self.params = []
@@ -49,7 +53,8 @@ class BagOfMAML(nn.Module):
 
                 if self.verbose:
                     train_logit = self.model(X[idxs].float().to(self.device), params=param)
-                    loss_after_adaptation = F.binary_cross_entropy_with_logits(train_logit.squeeze(1), y[idxs].to(self.device))
+                    loss_after_adaptation = F.binary_cross_entropy_with_logits(train_logit.squeeze(1),
+                                                                               y[idxs].to(self.device))
                     print(f"adapting to class {target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {inner_loss:.2f} -> {loss_after_adaptation:.2f}")
 
             self.params.append(param)
@@ -62,7 +67,8 @@ class BagOfMAML(nn.Module):
             if self.verbose:
                 print(f"predicting class {class_id}")
 
-            logit = torch.vstack([self.model(inp.float().to(self.device), params=param) for inp in torch.split(x, batch_size)])
+            logit = torch.vstack(
+                [self.model(inp.float().to(self.device), params=param) for inp in torch.split(x, batch_size)])
             logits.append(logit.squeeze(1).cpu())
 
         # N x C
@@ -79,7 +85,8 @@ class BagOfMAML(nn.Module):
 
 
 class BagOfMAMLEnsemble(nn.Module):
-    def __init__(self, model, gradient_steps=20, inner_step_size=0.4, first_order=False, verbose=False, device="cpu", batch_size=8, num_members=3, holdout_fraction=0.25, activation="softmax"):
+    def __init__(self, model, gradient_steps=20, inner_step_size=0.4, first_order=False, verbose=False, device="cpu",
+                 batch_size=8, num_members=3, holdout_fraction=0.1, activation="softmax", seed=0):
         super(BagOfMAMLEnsemble, self).__init__()
         self.model = model.to(device)
         self.ways = 1
@@ -92,6 +99,10 @@ class BagOfMAMLEnsemble(nn.Module):
         self.holdout_fraction = holdout_fraction
         self.activation = activation
 
+        self.seed = seed
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
+
         # to be filled by self.fit()
         self.params = []
         self.labels = None
@@ -101,6 +112,9 @@ class BagOfMAMLEnsemble(nn.Module):
     def fit(self, X_all, Y_all):
         self.labels = np.unique(Y_all)
         self.model.train()
+
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
 
         for target_class in self.labels:
             self.model.zero_grad()
@@ -112,8 +126,11 @@ class BagOfMAMLEnsemble(nn.Module):
                 if self.verbose:
                     print(f"fitting member {i}")
 
-                holdout_size = int(X_all.size(0) * self.holdout_fraction)
-                holdout_idxs = np.random.randint(X_all.shape[0], size=holdout_size)
+                holdout_size = max(int(X_all.size(0) * self.holdout_fraction),
+                                   2) // 2  # at least one samples per class (positive or negative)
+                neg_holdout_idxs = np.random.randint(X_all[y_all == 0].shape[0], size=holdout_size)
+                pos_holdout_idxs = np.random.randint(X_all[y_all == 1].shape[0], size=holdout_size)
+                holdout_idxs = np.hstack([neg_holdout_idxs, pos_holdout_idxs])
                 inverse_holdout_idxs = np.array([i for i in range(X_all.shape[0]) if i not in holdout_idxs])
                 X_holdout, y_holdout = X_all[holdout_idxs], y_all[holdout_idxs]
                 X, y = X_all[inverse_holdout_idxs], y_all[inverse_holdout_idxs]
@@ -131,7 +148,8 @@ class BagOfMAMLEnsemble(nn.Module):
                     with torch.no_grad():
                         idxs = np.random.randint(X_holdout.shape[0], size=self.batch_size)
                         train_logit = self.model(X_holdout[idxs].float().to(self.device), params=param)
-                        holdout_loss = F.binary_cross_entropy_with_logits(train_logit.squeeze(1), y_holdout[idxs].to(self.device))
+                        holdout_loss = F.binary_cross_entropy_with_logits(train_logit.squeeze(1),
+                                                                          y_holdout[idxs].to(self.device))
                         if holdout_loss < best_holdoutloss:
                             best_holdoutloss = holdout_loss
                             best_params = param
@@ -151,7 +169,8 @@ class BagOfMAMLEnsemble(nn.Module):
                 if self.verbose:
                     print(f"predicting class {class_id}")
                 logit = torch.vstack(
-                    [self.model(inp.float().to(self.device), params=param) for inp in torch.split(x, batch_size)]).squeeze(-1)
+                    [self.model(inp.float().to(self.device), params=param) for inp in
+                     torch.split(x, batch_size)]).squeeze(-1)
 
                 logits_.append(logit)
 
