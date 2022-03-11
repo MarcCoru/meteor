@@ -10,4 +10,5 @@ setup(
     author_email="marc.russwurm@epfl.ch",
     packages=find_packages(include=['bagofmaml', 'bagofmaml.*']),
     install_requires=requirements,
+    extras_require={"examples": ["numpy", "pandas", "matplotlib"]}
 )

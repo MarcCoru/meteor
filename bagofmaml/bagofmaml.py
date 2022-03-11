@@ -5,8 +5,12 @@ import torch
 import numpy as np
 
 class BagOfMAML(nn.Module):
-    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu", batch_size=8, activation="softmax"):
+    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu", batch_size=8, activation="softmax", seed=0):
         super(BagOfMAML, self).__init__()
+
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+
         self.model = model.to(device)
         self.ways = 1
         self.gradient_steps = gradient_steps
@@ -16,6 +20,7 @@ class BagOfMAML(nn.Module):
         self.verbose = verbose
         self.device = device
         self.activation = activation
+
 
 
         self.labels = None
@@ -74,7 +79,7 @@ class BagOfMAML(nn.Module):
 
 
 class BagOfMAMLEnsemble(nn.Module):
-    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=False, verbose=False, device="cpu", batch_size=8, num_members=3, holdout_fraction=0.25, activation="softmax"):
+    def __init__(self, model, gradient_steps=20, inner_step_size=0.4, first_order=False, verbose=False, device="cpu", batch_size=8, num_members=3, holdout_fraction=0.25, activation="softmax"):
         super(BagOfMAMLEnsemble, self).__init__()
         self.model = model.to(device)
         self.ways = 1
