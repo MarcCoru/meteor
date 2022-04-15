@@ -7,8 +7,9 @@ from torch.nn.functional import cross_entropy
 
 from dfcdataset import DFCDataset, get_rgb, split_support
 from transforms import get_classification_transform
-from resnet12 import prepare_classification_model
+from model import ResNet
 from bagofmaml import BagOfMAML
+from torchmeta.modules import (MetaConv2d)
 
 regions = [('KippaRing', 'winter'),
            ('MexicoCity', 'winter'),
@@ -22,17 +23,41 @@ all_classnames = np.array(["forest", "shrubland", "savanna", "grassland", "wetla
 
 app = Flask(__name__)
 
-#model = prepare_classification_model(nclasses=4)
-#model.load_state_dict(torch.load("model/model.pth", map_location="cpu"))
 inner_step_size = 0.32
 
 transform = get_classification_transform(s2only=True)
 ds = DFCDataset(dfcpath="/data/sen12ms/DFC_Public_Dataset", region=regions[3], transform=transform)
-device = "cuda"
+device = "cpu"
 N = 18
 
-model = prepare_classification_model(1, inplanes=13, resnet=True, norm="layernorm")
-model.load_state_dict(torch.load("model/model_best.pth"))
+def get_model():
+    snapshot_path = "model/model_best.pth"
+    sel_bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+               "S2B12"]
+
+    s1bands = ["S1VV", "S1VH"]
+    s2bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+               "S2B12"]
+    bands = s1bands + s2bands
+
+    band_idxs = np.array([bands.index(b) for b in sel_bands])
+
+    model = ResNet(inplanes=15, out_features=1, normtype="instancenorm", avg_pool=True)
+    state_dict = torch.load(snapshot_path, map_location="cpu")
+
+    # modify model
+    model.layer1[0].conv1 = MetaConv2d(len(sel_bands), 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),
+                                       bias=False)
+    model.layer1[0].downsample[0] = MetaConv2d(len(sel_bands), 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+
+    # modify state dict
+    state_dict["layer1.0.conv1.weight"] = state_dict["layer1.0.conv1.weight"][:, band_idxs]
+    state_dict["layer1.0.downsample.0.weight"] = state_dict["layer1.0.downsample.0.weight"][:, band_idxs]
+
+    model.load_state_dict(state_dict)
+    return model
+
+model = get_model()
 
 bag = BagOfMAML(model, 1, first_order=True, verbose=True, device=device, batch_size=2)
 

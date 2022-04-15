@@ -1,2 +1,4 @@
 .idea
 *__pycache__
+bagofmaml.egg-info
+data.npz
