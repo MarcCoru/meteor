@@ -7,25 +7,37 @@ import numpy as np
 
 
 class BagOfMAML(nn.Module):
-    def __init__(self, model, ways, gradient_steps=1, inner_step_size=0.4, first_order=False, verbose=False, device="cpu", batch_size=8):
+    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu",
+                 batch_size=8, activation="softmax", seed=0, mask=None):
         super(BagOfMAML, self).__init__()
+
+        self.seed = seed
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
+
         self.model = model.to(device)
-        self.ways = ways
+        self.ways = 1
         self.gradient_steps = gradient_steps
         self.inner_step_size = inner_step_size
         self.first_order = first_order
         self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1))
         self.verbose = verbose
         self.device = device
+        self.activation = activation
+        self.mask = mask
 
-        # to be filled by self.fit()
-        self.params = []
         self.labels = None
         self.batch_size = batch_size
 
     def fit(self, X, Y):
         self.labels = np.unique(Y)
         self.model.train()
+
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
+
+        # to be filled by self.fit()
+        self.params = []
 
         for target_class in self.labels:
             self.model.zero_grad()
@@ -43,8 +55,10 @@ class BagOfMAML(nn.Module):
 
                 if self.verbose:
                     train_logit = self.model(X[idxs].float().to(self.device), params=param)
-                    loss_after_adaptation = F.binary_cross_entropy_with_logits(train_logit.squeeze(1), y[idxs].to(self.device))
-                    print(f"adapting to class {target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {inner_loss:.2f} -> {loss_after_adaptation:.2f}")
+                    loss_after_adaptation = F.binary_cross_entropy_with_logits(train_logit.squeeze(1),
+                                                                               y[idxs].to(self.device))
+                    print(
+                        f"adapting to class {target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {inner_loss:.2f} -> {loss_after_adaptation:.2f}")
 
             self.params.append(param)
 
@@ -56,100 +70,21 @@ class BagOfMAML(nn.Module):
             if self.verbose:
                 print(f"predicting class {class_id}")
 
-            logit = torch.vstack([self.model(inp.float().to(self.device), params=param) for inp in torch.split(x, batch_size)])
+            logit = torch.vstack(
+                [self.model(inp.float().to(self.device), params=param) for inp in torch.split(x, batch_size)])
             logits.append(logit.squeeze(1).cpu())
 
         # N x C
-        #probas = torch.softmax(torch.stack(logits).T, dim=1)
-        probas = torch.sigmoid(torch.stack(logits))
+        if self.activation == "softmax":
+            probas = torch.softmax(torch.stack(logits), dim=0)
+        elif self.activation == "sigmoid":
+            probas = torch.sigmoid(torch.stack(logits))
+        else:
+            raise NotImplementedError()
 
         predictions = probas.argmax(0)
 
         return self.labels[predictions], probas
-
-
-class BagOfMAMLEnsemble(nn.Module):
-    def __init__(self, model, ways, gradient_steps=1, inner_step_size=0.4, first_order=False, verbose=False, device="cpu", batch_size=8, num_members=3):
-        super(BagOfMAMLEnsemble, self).__init__()
-        self.model = model.to(device)
-        self.ways = ways
-        self.gradient_steps = gradient_steps
-        self.inner_step_size = inner_step_size
-        self.first_order = first_order
-        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor(1))
-        self.verbose = verbose
-        self.device = device
-
-        # to be filled by self.fit()
-        self.params = []
-        self.labels = None
-        self.batch_size = batch_size
-        self.num_members = num_members
-
-    def fit(self, X_all, Y_all):
-        self.labels = np.unique(Y_all)
-        self.model.train()
-
-        for target_class in self.labels:
-            self.model.zero_grad()
-
-            y_all = (Y_all == target_class).to(float)
-
-            member_params = []
-            for i in range(self.num_members):
-                print(f"fitting member {i}")
-
-                holdout_size = int(X_all.size(0) * 0.25)
-                holdout_idxs = np.random.randint(X_all.shape[0], size=holdout_size)
-                inverse_holdout_idxs = np.array([i for i in range(X_all.shape[0]) if i not in holdout_idxs])
-                X_holdout, y_holdout = X_all[holdout_idxs], y_all[holdout_idxs]
-                X, y = X_all[inverse_holdout_idxs], y_all[inverse_holdout_idxs]
-
-                param = OrderedDict(self.model.meta_named_parameters())
-                best_holdoutloss = 999
-                for t in range(self.gradient_steps):
-                    idxs = np.random.randint(X.shape[0], size=self.batch_size)
-                    train_logit = self.model(X[idxs].float().to(self.device), params=param)
-
-                    inner_loss = self.criterion(train_logit.squeeze(1), y[idxs].to(self.device))
-                    param = update_parameters(self.model, inner_loss, params=param,
-                                              inner_step_size=self.inner_step_size, first_order=self.first_order)
-
-                    with torch.no_grad():
-                        idxs = np.random.randint(X_holdout.shape[0], size=self.batch_size)
-                        train_logit = self.model(X_holdout[idxs].float().to(self.device), params=param)
-                        holdout_loss = F.binary_cross_entropy_with_logits(train_logit.squeeze(1), y_holdout[idxs].to(self.device))
-                        if holdout_loss < best_holdoutloss:
-                            best_holdoutloss = holdout_loss
-                            best_params = param
-                            if self.verbose:
-                                print(
-                                    f"optimizing for class {target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {best_holdoutloss:.2f}")
-                member_params.append(best_params)
-            self.params.append(member_params)
-
-    @torch.no_grad()
-    def predict(self, x, batch_size=16):
-        self.model.eval()
-        probas = []
-        for class_id, member_params in zip(self.labels, self.params):
-            probas_ = []
-            for param in member_params:
-                if self.verbose:
-                    print(f"predicting class {class_id}")
-                logit = torch.vstack(
-                    [self.model(inp.float().to(self.device), params=param) for inp in torch.split(x, batch_size)]).squeeze(-1)
-                probas_.append(torch.sigmoid(logit))
-            probas.append(torch.stack(probas_).cpu())
-
-        # N x C
-        probas = torch.stack(probas)
-        scores = probas.mean(1)
-
-        predictions = scores.argmax(0)
-
-        return self.labels[predictions].T, probas
-
 
 def update_parameters(model, loss, params=None, inner_step_size=0.5, first_order=False):
     """Update the parameters of the model, with one step of gradient descent.
