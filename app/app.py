@@ -31,7 +31,9 @@ device = "cpu"
 N = 18
 
 def get_model():
-    snapshot_path = "model/model_best.pth"
+    #snapshot_path = "/home/marc/projects/bagofmaml/app/model/model_best.pth"
+    snapshot_path = "/home/marc/projects/bagofmaml/app/model/model_best_bs16.pth"
+
     sel_bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
                "S2B12"]
 
@@ -49,6 +51,8 @@ def get_model():
     model.layer1[0].conv1 = MetaConv2d(len(sel_bands), 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),
                                        bias=False)
     model.layer1[0].downsample[0] = MetaConv2d(len(sel_bands), 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+
+    state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
 
     # modify state dict
     state_dict["layer1.0.conv1.weight"] = state_dict["layer1.0.conv1.weight"][:, band_idxs]
@@ -145,7 +149,7 @@ def generate_links(data):
                         {
                             "source": support_id,
                             "target": query_id,
-                            "value": v
+                            "value": 1
                         }
                     )
 
