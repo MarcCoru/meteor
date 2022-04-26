@@ -7,7 +7,16 @@
 <svg width="960" height="600" preserveAspectRatio="xMidYMid meet"></svg>
 
 <div id="update"></div>
+
+<select name="datasets" id="datasets">
+  <option value="landcover">land cover</option>
+  <option value="marinedebris">marine debris</option>
+</select>
+
+<button id="newimagesbtn" onclick="reset();get_nodes()" type="button">new images</button>
+
 <button id="btn" onclick="check_request_links()" type="button">predict!</button>
+<button id="resetbtn" onclick="reset()" type="button">reset</button>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
@@ -29,7 +38,7 @@ function arrayRemove(arr, value) {
 var color = d3.scaleOrdinal(d3.schemeCategory20);
 
 var collideForce = d3.forceCollide().radius(function(d) {return radius});
-var linkForce = d3.forceLink().id(function(d) { return d.id; }).strength(0.01);
+var linkForce = d3.forceLink().id(function(d) { return d.id; }).strength(0.03);
 var centerForce = d3.forceCenter(width / 2, height / 2);
 
 var simulation = d3.forceSimulation().alphaDecay(0.001)
@@ -47,112 +56,116 @@ var nodes = null;
 var links = null;
 var payload = {};
 
-
-d3.json("/get_nodes", function(error, graph) {
-  if (error) throw error;
-
-  nodes = graph
-
-  var node = svg.append("g")
-      .attr("class", "nodes")
-    .selectAll("g")
-    .data(graph.nodes)
-    .enter().append("g");
+function get_nodes(){
 
 
 
-  svg.append('clipPath')
-   .attr('id','clipObj')
-        .append('circle')
+    d3.json("/get_nodes?dataset="+$("#datasets").val(), function(error, graph) {
+      if (error) throw error;
+
+      nodes = graph
+
+      var node = svg.append("g")
+          .attr("class", "nodes")
+        .selectAll("g")
+        .data(graph.nodes)
+        .enter().append("g");
+
+
+
+      svg.append('clipPath')
+       .attr('id','clipObj')
+            .append('circle')
+             .attr('cx',radius/2)
+             .attr('cy',radius/2)
+             .attr('r',radius);
+
+      //var circles = node.append("circle")
+        //.attr("r", radius)
+        //.attr("fill", function(d) { return color(d.group); })
+      var circles = node.append("image")
+          //.attr("xlink:href", "get_rgb_image?path=fall/1/Grassland/p176bl")
+          .attr("xlink:href", function(d) { return d.href; })
+          .attr("x", -radius/2)
+          .attr("y", -radius/2)
+          .attr("width", 2*radius)
+          .attr("height", 2*radius)
+          .attr('clip-path','url(#clipObj)');
+
+        /*
+        var circles = node.append("circle")
+             .attr('cx',radius/2)
+             .attr('cy',radius/2)
+             .attr('r', radius+1)
+             .style('fill', "none")
+             .style('stroke-width', 2)
+             .style('stroke', "black");
+        */
+        var circles_border = node.append("circle")
          .attr('cx',radius/2)
          .attr('cy',radius/2)
-         .attr('r',radius);
+         .attr('r', radius+3)
+         .attr('class', "circle");
 
-  //var circles = node.append("circle")
-    //.attr("r", radius)
-    //.attr("fill", function(d) { return color(d.group); })
-  var circles = node.append("image")
-      //.attr("xlink:href", "get_rgb_image?path=fall/1/Grassland/p176bl")
-      .attr("xlink:href", function(d) { return d.href; })
-      .attr("x", -radius/2)
-      .attr("y", -radius/2)
-      .attr("width", 2*radius)
-      .attr("height", 2*radius)
-      .attr('clip-path','url(#clipObj)');
+        circles_border.on("click", function(d) {
+          var el = d3.select(this);
 
-    /*
-    var circles = node.append("circle")
-         .attr('cx',radius/2)
-         .attr('cy',radius/2)
-         .attr('r', radius+1)
-         .style('fill', "none")
-         .style('stroke-width', 2)
-         .style('stroke', "black");
-    */
-    var circles_border = node.append("circle")
-     .attr('cx',radius/2)
-     .attr('cy',radius/2)
-     .attr('r', radius+3)
-     .attr('class', "circle");
+          console.log(el.attr("class").replace("circle ",""));
+          console.log(d.id)
 
-    circles_border.on("click", function(d) {
-      var el = d3.select(this);
+          // if class already assigned to one of the classes
+          if (classes.includes(el.attr("class").replace("circle ",""))){
+              var classid = el.attr("class").replace("circle ","")
 
-      console.log(el.attr("class").replace("circle ",""));
-      console.log(d.id)
+              // update lists
+              arrayRemove(active_classes, classid)
+              available_classes.push(classid)
+              delete payload[classid]
 
-      // if class already assigned to one of the classes
-      if (classes.includes(el.attr("class").replace("circle ",""))){
-          var classid = el.attr("class").replace("circle ","")
+              el.attr("class", "circle") // reset to no class in the element
 
-          // update lists
-          arrayRemove(active_classes, classid)
-          available_classes.push(classid)
-          delete payload[classid]
-
-          el.attr("class", "circle") // reset to no class in the element
-
-      }
-      else{
-          if(available_classes.length > 0){
-              var classid = available_classes.pop();
-              el.attr("class", "circle "+classid);
-              active_classes.push(classid)
-              payload[classid] = d.id
           }
+          else{
+              if(available_classes.length > 0){
+                  var classid = available_classes.pop();
+                  el.attr("class", "circle "+classid);
+                  active_classes.push(classid)
+                  payload[classid] = d.id
+              }
+          }
+          class_counter += 1;
+          updateInfo();
+        });
+
+      // Create a drag handler and append it to the node object instead
+      var drag_handler = d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended);
+
+      drag_handler(node);
+
+      node.append("title")
+          .text(function(d) { return d.classname; });
+
+      simulation
+          .nodes(graph.nodes)
+          .on("tick", ticked);
+
+      function ticked() {
+
+        node
+            .attr("transform", function(d) {
+                // frame detection
+                x = Math.max(2*radius, Math.min(width - 2*radius, d.x));
+                y = Math.max(2*radius, Math.min(height - 2*radius, d.y));
+              return "translate(" + x + "," + y + ")";
+            })
       }
-      class_counter += 1;
-      updateInfo();
+
+
     });
-
-  // Create a drag handler and append it to the node object instead
-  var drag_handler = d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
-
-  drag_handler(node);
-
-  node.append("title")
-      .text(function(d) { return d.classname; });
-
-  simulation
-      .nodes(graph.nodes)
-      .on("tick", ticked);
-
-  function ticked() {
-
-    node
-        .attr("transform", function(d) {
-            // frame detection
-            x = Math.max(2*radius, Math.min(width - 2*radius, d.x));
-            y = Math.max(2*radius, Math.min(height - 2*radius, d.y));
-          return "translate(" + x + "," + y + ")";
-        })
-  }
-
-
-});
+}
 
 function updateInfo(){
     $("#update").html("available classes: " + available_classes + " active classes: " + active_classes + " payload "+ JSON.stringify(payload))
@@ -231,12 +244,32 @@ function dragended(d) {
      */
 }
 
+function reset(){
+    // delete everything in the canvas
+    d3.select('svg').selectAll('*').remove();
+
+    // reset variables
+    classes = ["class0","class1","class2","class3"];
+    available_classes = ["class0","class1","class2","class3"];
+    active_classes = [];
+    nodes = null;
+    links = null;
+    payload = {};
+    class_counter = 0;
+
+    simulation.force("charge", d3.forceManyBody().strength(0));
+    document.getElementById("btn").innerHTML = "predict!"
+}
+
 function add_force_links(data){
+    console.log(data)
     links = data.links;
     simulation.force("link").links(links);
-    simulation.force("charge", d3.forceManyBody().strength(-50));
+    simulation.force("charge", d3.forceManyBody().strength(-20));
     document.getElementById("btn").innerHTML = "done!"
 }
 
+
+get_nodes()
 updateInfo()
 </script>

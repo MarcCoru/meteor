@@ -27,8 +27,10 @@ inner_step_size = 0.32
 
 transform = get_classification_transform(s2only=True)
 ds = DFCDataset(dfcpath="/data/sen12ms/DFC_Public_Dataset", region=regions[3], transform=transform)
-device = "cpu"
+device = "cuda"
 N = 18
+
+accra_floatingobjects = torch.from_numpy(np.load("./data/floatingobjects_accra.npy"))
 
 def get_model():
     #snapshot_path = "/home/marc/projects/bagofmaml/app/model/model_best.pth"
@@ -69,11 +71,17 @@ bag = BagOfMAML(model, 1, first_order=True, verbose=True, device=device, batch_s
 def index():
     return render_template('index.html', name="name")
 
+def get_dataset_idxs(dataset):
+    if dataset == "landcover":
+        support = split_support(ds, shots=3)
+        return support["index"]
+    if dataset == "marinedebris":
+        return np.random.choice(accra_floatingobjects.shape[0],size=18, replace=False)
+
 @app.route("/get_nodes")
 def get_nodes():
-
-    support = split_support(ds, shots=3)
-    idxs = support["index"]
+    dataset = request.args.get('dataset')
+    idxs = get_dataset_idxs(dataset)
 
     nodes = []
     for i, idx in zip(range(N), idxs):
@@ -81,7 +89,8 @@ def get_nodes():
         node = {
             "id": str(idx),
             "classname": str(all_classnames[row.maxclass-1]),
-            "href":"/get_rgb_image?idx="+str(idx)
+            "href":"/get_rgb_image?dataset="+dataset+"&idx="+str(idx),
+            "dataset":dataset
         }
         nodes.append(node)
 
@@ -95,10 +104,17 @@ def get_nodes():
 def get_rgb_image():
     # e.g. http://127.0.0.1:5000/get_rgb_image?path=fall/1/Grassland/p176bl
     idx = request.args.get('idx')
+    dataset = request.args.get('dataset')
 
-    x, y = ds[int(idx)]
+    if dataset == "landcover":
+        x, y = ds[int(idx)]
+    elif dataset == "marinedebris":
+        x = accra_floatingobjects[int(idx)]
+    else:
+        raise ValueError("invalid dataset argument!")
 
     rgb = get_rgb(x.numpy())
+
 
     img = Image.fromarray(rgb.astype('uint8'))
     file_object = io.BytesIO()
@@ -124,7 +140,11 @@ def generate_links(data):
     X_support, y_support = [], []
     for node in nodes["nodes"]:
         idx = int(node["id"])
-        x, y = ds[idx]
+        if node["dataset"] == "marinedebris":
+            x = accra_floatingobjects[idx]
+        elif node["dataset"] == "landcover":
+            x, y = ds[idx]
+
         X_query.append(x)
         if idx in classvalues:
             X_support.append(x)
@@ -142,13 +162,13 @@ def generate_links(data):
     links = []
     for i, support_id in enumerate(classvalues):
         for j, (query_id, pred) in enumerate(zip(query_idxs, predictions)):
-            if support_id != query_id:
+            if query_id not in classvalues:
                 if pred == i:
                     v = float(y_score.cpu()[i,j])
                     links.append(
                         {
-                            "source": support_id,
-                            "target": query_id,
+                            "source": str(support_id),
+                            "target": str(query_id),
                             "value": 1
                         }
                     )
