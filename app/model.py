@@ -15,9 +15,7 @@ def prepare_classification_model(nclasses, inplanes=15, resnet=True, norm="tbn",
             #model = ConvolutionalNeuralNetwork(inplanes, nclasses, input_size=128, hidden_size=64,
             #                               inner_update_lr_init=None, no_batchnorm=no_batchnorm)
     if gradient_mask:
-        mask = prepare_gradient_mask(model, device=device)
-        mask_optimizer = torch.optim.SGD(mask.parameters(), lr=0.001, momentum=0.9,
-                                                nesterov=True)
+        raise NotImplementedError()
     else:
         mask, mask_optimizer = None, None
     return model, mask, mask_optimizer
@@ -181,7 +179,7 @@ def get_normlayer(norm, planes):
         groups = int(norm.replace("groupnorm",""))
         return nn.GroupNorm(planes // groups, planes)
     elif norm == "tasknorm":
-        return TaskNormI(planes)
+        raise NotImplementedError()
     elif norm == "tbn":
         return MetaBatchNorm2d(planes, track_running_stats=False)
     elif norm == "cbn":
