@@ -1,7 +1,5 @@
 import unittest
 
-import pytest
-
 from bagofmaml import BagOfMAML
 from bagofmaml.models import ResNet, get_model
 import torch
@@ -27,7 +25,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(logits.shape, torch.Size([BATCH_SIZE,1]))
 
     def test_error_notsubsetbands(self):
-        with pytest.raises(AssertionError):
+        with self.assertRaises(AssertionError):
             get_model("maml_resnet12", subset_bands=RGBBANDS + ["dfferentband"])
 
     def test_get_model(self):
