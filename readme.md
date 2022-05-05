@@ -15,12 +15,32 @@ from bagofmaml import BagOfMAML
 from bagofmaml import models
 import torch
 
-# initialize model
-basemodel = models.get_model("maml_resnet12_rgb")
+# initialize an RGB model
+basemodel = models.get_model("maml_resnet12", subset_bands=["S2B4", "S2B3", "S2B2"])
 bag = BagOfMAML(basemodel)
 
 # fine-tune model to labelled data
 X_support, y_support = torch.rand(10, 3, 128, 128), torch.randint(3, (10,))
+bag.fit(X_support, y_support)
+
+# predict
+X_query = torch.rand(10, 3, 128, 128)
+y_pred, y_scores = bag.predict(X_query)
+```
+
+## (Coarse) Segmentation
+
+```python
+from bagofmaml import BagOfMAML
+from bagofmaml import models
+import torch
+
+# initialize an RGB model
+basemodel = models.get_model("maml_resnet12", subset_bands=["S2B4", "S2B3", "S2B2"], segmentation=True)
+bag = BagOfMAML(basemodel)
+
+# fine-tune model to labelled data
+X_support, y_support = torch.rand(10, 3, 128, 128), torch.randint(3, (10, 128, 128))
 bag.fit(X_support, y_support)
 
 # predict
@@ -55,7 +75,9 @@ X_support = torch.vstack([start, end])
 y_support = torch.hstack([torch.zeros(shot), torch.ones(shot)]).long()
 
 # get model
-model = models.get_model("maml_resnet12_s2")
+s2bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+           "S2B12"]
+model = models.get_model("maml_resnet12", subset_bands=s2bands)
 bag = BagOfMAML(model, verbose=True, inner_step_size=0.4, gradient_steps=20)
 
 # fit and predict

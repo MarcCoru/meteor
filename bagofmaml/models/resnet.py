@@ -13,7 +13,7 @@ import torch.nn.functional as F
 from torch.distributions import Bernoulli
 from torchmeta.modules import (MetaModule, MetaConv2d, MetaBatchNorm2d,
                                MetaSequential, MetaLinear)
-
+import torchvision
 from .tasknorm import TaskNormI
 
 
@@ -251,6 +251,7 @@ class ResNet(MetaModule):
         return MetaSequential(*layers)
 
     def forward(self, x, params=None):
+        inshape = x.shape
         x = self.layer1(x, params=get_subdict(params, 'layer1'))
         x = self.layer2(x, params=get_subdict(params, 'layer2'))
         x = self.layer3(x, params=get_subdict(params, 'layer3'))
@@ -260,5 +261,11 @@ class ResNet(MetaModule):
             features = x.view((x.size(0), -1))
         else:
             features = x
-        return self.classifier(self.dropout(features),
-                               params=get_subdict(params, 'classifier'))
+
+        x = self.classifier(self.dropout(features),
+                                   params=get_subdict(params, 'classifier'))
+        if not self.keep_avg_pool:
+            x = torchvision.transforms.functional.resize(x, [inshape[2], inshape[3]], torchvision.transforms.InterpolationMode.BICUBIC)
+
+        return x
+
