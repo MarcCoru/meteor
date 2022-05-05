@@ -1,43 +1,43 @@
 .nodes circle {
-  fill:#0000;
-  stroke-width: 5px;
+    fill: #0000;
+    stroke-width: 5px;
 }
 
-.nodes .class0{
-  stroke: #ff0000;
+.nodes .class0 {
+    stroke: #ff0000;
 }
 
-.nodes .class1{
-  stroke: #00ffff;
+.nodes .class1 {
+    stroke: #00ffff;
 }
 
-.nodes .class2{
-  stroke: #1900ff;
+.nodes .class2 {
+    stroke: #1900ff;
 }
 
-.nodes .class3{
-  stroke: #ffa600;
+.nodes .class3 {
+    stroke: #ffa600;
 }
 
-.nodes .class4{
-  stroke: #dd00ff;
+.nodes .class4 {
+    stroke: #dd00ff;
 }
 
-.nodes .class5{
-  stroke: #000000;
+.nodes .class5 {
+    stroke: #000000;
 }
 
 text {
-  font-family: sans-serif;
-  font-size: 10px;
+    font-family: sans-serif;
+    font-size: 10px;
 }
 
 .area {
-  fill: #CAC7C7;
-  transition: 1s linear all;
+    fill: #CAC7C7;
+    transition: 1s linear all;
 }
 
 .active {
-  fill: #00A79F;
-  transition: 1s linear all;
+    fill: #00A79F;
+    transition: 1s linear all;
 }

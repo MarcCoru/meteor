@@ -1,9 +1,9 @@
-
 from collections import OrderedDict
-from torch import nn
-import torch.nn.functional as F
-import torch
+
 import numpy as np
+import torch
+import torch.nn.functional as F
+from torch import nn
 
 
 class BagOfMAML(nn.Module):
@@ -85,6 +85,7 @@ class BagOfMAML(nn.Module):
         predictions = probas.argmax(0)
 
         return self.labels[predictions], probas
+
 
 def update_parameters(model, loss, params=None, inner_step_size=0.5, first_order=False):
     """Update the parameters of the model, with one step of gradient descent.

@@ -1,9 +1,43 @@
 import math
+
+import numpy as np
 from torchmeta.modules import (MetaModule)
 from torchvision import models
 
-def prepare_classification_model(nclasses, inplanes=15, resnet=True, norm="tbn", avg_pool=True, prototypicalnetwork=False, gradient_mask=False, device="cpu"):
+MODEL_URL = "https://bagofmaml.s3.eu-central-1.amazonaws.com/app/model.pth"
 
+
+def get_model():
+    sel_bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+                 "S2B12"]
+
+    s1bands = ["S1VV", "S1VH"]
+    s2bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+               "S2B12"]
+    bands = s1bands + s2bands
+
+    band_idxs = np.array([bands.index(b) for b in sel_bands])
+
+    model = ResNet(inplanes=15, out_features=1, normtype="instancenorm", avg_pool=True)
+    state_dict = torch.hub.load_state_dict_from_url(MODEL_URL, map_location="cpu")
+
+    # modify model
+    model.layer1[0].conv1 = MetaConv2d(len(sel_bands), 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1),
+                                       bias=False)
+    model.layer1[0].downsample[0] = MetaConv2d(len(sel_bands), 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+
+    state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+
+    # modify state dict
+    state_dict["layer1.0.conv1.weight"] = state_dict["layer1.0.conv1.weight"][:, band_idxs]
+    state_dict["layer1.0.downsample.0.weight"] = state_dict["layer1.0.downsample.0.weight"][:, band_idxs]
+
+    model.load_state_dict(state_dict)
+    return model
+
+
+def prepare_classification_model(nclasses, inplanes=15, resnet=True, norm="tbn", avg_pool=True,
+                                 prototypicalnetwork=False, gradient_mask=False, device="cpu"):
     if prototypicalnetwork:
         model = models.resnet18(pretrained=False)
         model.conv1 = nn.Conv2d(inplanes, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -12,15 +46,14 @@ def prepare_classification_model(nclasses, inplanes=15, resnet=True, norm="tbn",
             model = ResNet(inplanes=inplanes, out_features=nclasses, normtype=norm, avg_pool=avg_pool)
         else:
             raise NotImplementedError()
-            #model = ConvolutionalNeuralNetwork(inplanes, nclasses, input_size=128, hidden_size=64,
+            # model = ConvolutionalNeuralNetwork(inplanes, nclasses, input_size=128, hidden_size=64,
             #                               inner_update_lr_init=None, no_batchnorm=no_batchnorm)
     if gradient_mask:
-        mask = prepare_gradient_mask(model, device=device)
-        mask_optimizer = torch.optim.SGD(mask.parameters(), lr=0.001, momentum=0.9,
-                                                nesterov=True)
+        raise NotImplementedError()
     else:
         mask, mask_optimizer = None, None
     return model, mask, mask_optimizer
+
 
 class BandEncoder(MetaModule):
     def __init__(self, out_features=128):
@@ -32,12 +65,12 @@ class BandEncoder(MetaModule):
         return params
 
     def forward(self, inputs, params):
-
         # initialize temporary multi-band encoder (takes 94 micro seconds)
         temporary_encoder = MetaConv2d(inputs.shape[1], 128, kernel_size=3, padding=1)
 
         # forward takes (82 milli seconds with an [10, 13, 256, 256] image)
         return temporary_encoder(inputs, params=self.get_subdict(params, "encoder"))
+
 
 class DynamicResNet(MetaModule):
     def __init__(self):
@@ -49,16 +82,21 @@ class DynamicResNet(MetaModule):
         features = self.band_encoder(inputs, params=self.get_subdict(params, "band_encoder"))
         return self.feature_model(features, params=self.get_subdict(params, "feature_model"))
 
+
 def conv3x3(in_channels, out_channels, no_batchnorm=False, track_running_stats=False, **kwargs):
     return MetaSequential(
         MetaConv2d(in_channels, out_channels, kernel_size=3, padding=1, **kwargs),
-        MetaBatchNorm2d(out_channels, momentum=1., track_running_stats=track_running_stats) if not no_batchnorm else nn.InstanceNorm2d(out_channels),
+        MetaBatchNorm2d(out_channels, momentum=1.,
+                        track_running_stats=track_running_stats) if not no_batchnorm else nn.InstanceNorm2d(
+            out_channels),
         nn.ReLU(),
         nn.MaxPool2d(2)
     )
 
+
 class ConvolutionalNeuralNetwork(MetaModule):
-    def __init__(self, in_channels, out_features, input_size=128, hidden_size=64, inner_update_lr_init=None, no_batchnorm=False, track_running_stats=False):
+    def __init__(self, in_channels, out_features, input_size=128, hidden_size=64, inner_update_lr_init=None,
+                 no_batchnorm=False, track_running_stats=False):
         super(ConvolutionalNeuralNetwork, self).__init__()
         self.in_channels = in_channels
         self.out_features = out_features
@@ -66,7 +104,8 @@ class ConvolutionalNeuralNetwork(MetaModule):
 
         self.features = MetaSequential(
             conv3x3(in_channels, hidden_size, no_batchnorm=no_batchnorm, track_running_stats=track_running_stats),
-            *[conv3x3(hidden_size, hidden_size, no_batchnorm=no_batchnorm) for _ in range(int(math.log2(input_size) - 1))]
+            *[conv3x3(hidden_size, hidden_size, no_batchnorm=no_batchnorm) for _ in
+              range(int(math.log2(input_size) - 1))]
         )
 
         self.classifier = MetaLinear(hidden_size, out_features)
@@ -76,19 +115,21 @@ class ConvolutionalNeuralNetwork(MetaModule):
             self.learning_rates = self.add_learning_rate_parameters(inner_update_lr_init)
 
     """MAML++ feature of learning inner learning rates on the fly"""
+
     def add_learning_rate_parameters(self, inner_update_lr_init):
         parameter_names = [x[0].replace('.', '-') for x in list(self.named_parameters())]
         return nn.ParameterDict({
             x: torch.nn.Parameter(torch.FloatTensor([inner_update_lr_init]),
-                                                         requires_grad=True)
+                                  requires_grad=True)
             for x in parameter_names
         })
 
     def forward(self, inputs, params=None):
         features = self.features(inputs, params=self.get_subdict(params, 'features'))
-        features = features.mean([2,3])
+        features = features.mean([2, 3])
         logits = self.classifier(features, params=self.get_subdict(params, 'classifier'))
         return logits
+
 
 #################
 ### ResNet-12 ###
@@ -106,10 +147,11 @@ from torch.distributions import Bernoulli
 ResNet Code copied from https://github.com/HJ-Yoo/BOIL
 """
 
+
 def get_subdict(adict, name):
     if adict is None:
         return adict
-    tmp = {k[len(name) + 1:]:adict[k] for k in adict if name in k}
+    tmp = {k[len(name) + 1:]: adict[k] for k in adict if name in k}
     return tmp
 
 
@@ -170,24 +212,25 @@ class DropBlock(MetaModule):
         block_mask = 1 - padded_mask
         return block_mask
 
-def get_normlayer(norm, planes):
 
+def get_normlayer(norm, planes):
     if norm == "instancenorm":
-        #return nn.GroupNorm(planes, planes)
+        # return nn.GroupNorm(planes, planes)
         return nn.InstanceNorm2d(planes, track_running_stats=False, affine=True)
     elif norm == "layernorm":
         return nn.GroupNorm(1, planes)
     elif "groupnorm" in norm:
-        groups = int(norm.replace("groupnorm",""))
+        groups = int(norm.replace("groupnorm", ""))
         return nn.GroupNorm(planes // groups, planes)
     elif norm == "tasknorm":
-        return TaskNormI(planes)
+        raise NotImplementedError()
     elif norm == "tbn":
         return MetaBatchNorm2d(planes, track_running_stats=False)
     elif norm == "cbn":
         return MetaBatchNorm2d(planes, track_running_stats=True)
     else:
         raise ValueError(f"wrong norm {norm} specificed")
+
 
 class BasicBlock(MetaModule):
     expansion = 1
@@ -274,7 +317,7 @@ class BasicBlock(MetaModule):
 
 
 class ResNet(MetaModule):
-    def __init__(self, inplanes = 3, keep_prob=1.0, avg_pool=True, drop_rate=0.0,
+    def __init__(self, inplanes=3, keep_prob=1.0, avg_pool=True, drop_rate=0.0,
                  dropblock_size=5, out_features=5, wh_size=1, big_network=False, normtype="tbn"):
 
         # NOTE  keep_prob < 1 and drop_rate > 0 are NOT supported!
@@ -325,7 +368,6 @@ class ResNet(MetaModule):
                     drop_block=False, block_size=1, max_padding=0, normtype="tbn"):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
-
             norm = get_normlayer(normtype, planes * block.expansion)
 
             downsample = MetaSequential(
