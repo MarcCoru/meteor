@@ -9,7 +9,6 @@ BANDAR_ANZALI_URL = "https://bagofmaml.s3.eu-central-1.amazonaws.com/app/BandarA
 root_dir = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(os.path.join(root_dir, "data"), exist_ok=True)
 
-
 def get_marinedebris_accra():
     npyfile = os.path.join(root_dir, "data", "marinedebris_accra.npy")
     if not os.path.exists(npyfile):
@@ -26,3 +25,7 @@ def get_bandaranzali():
         with open(npyfile, "wb") as dst:
             dst.write(response.content)
     return np.load(npyfile)
+
+if __name__ == '__main__':
+    get_bandaranzali()
+    get_marinedebris_accra()
