@@ -1,15 +1,14 @@
 from collections import OrderedDict
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 
-class BagOfMAML(nn.Module):
+class METEOR(nn.Module):
     def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu",
-                 batch_size=8, activation="softmax", seed=0, mask=None):
-        super(BagOfMAML, self).__init__()
+                 batch_size=8, activation="softmax", seed=0):
+        super(METEOR, self).__init__()
 
         self.seed = seed
         torch.manual_seed(self.seed)
@@ -24,7 +23,6 @@ class BagOfMAML(nn.Module):
         self.verbose = verbose
         self.device = device
         self.activation = activation
-        self.mask = mask
 
         self.labels = None
         self.batch_size = batch_size
@@ -57,8 +55,7 @@ class BagOfMAML(nn.Module):
                     train_logit = self.model(X[idxs].float().to(self.device), params=param)
                     loss_after_adaptation = F.binary_cross_entropy_with_logits(train_logit.squeeze(1),
                                                                                y[idxs].to(self.device))
-                    print(
-                        f"adapting to class {target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {inner_loss:.2f} -> {loss_after_adaptation:.2f}")
+                    print(f"adapting to class {target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {inner_loss:.2f} -> {loss_after_adaptation:.2f}")
 
             self.params.append(param)
 
@@ -85,7 +82,6 @@ class BagOfMAML(nn.Module):
         predictions = probas.argmax(0)
 
         return self.labels[predictions], probas
-
 
 def update_parameters(model, loss, params=None, inner_step_size=0.5, first_order=False):
     """Update the parameters of the model, with one step of gradient descent.

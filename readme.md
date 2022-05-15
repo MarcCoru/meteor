@@ -1,57 +1,57 @@
 # Bag-of-MAML
 
-![](https://github.com/marccoru/bagofmaml/actions/workflows/python-package-conda.yml/badge.svg)
+![](https://github.com/marccoru/meteor/actions/workflows/python-package-conda.yml/badge.svg)
 
 ## Install Package and Requirements
 
 ```commandline
-pip install git+https://github.com/marccoru/bagofmaml.git
+pip install git+https://github.com/marccoru/meteor.git
 ```
 
 ## Getting Started
 
 ```python
-from bagofmaml import BagOfMAML
-from bagofmaml import models
+from meteor import METEOR
+from meteor import models
 import torch
 
 # initialize an RGB model
 basemodel = models.get_model("maml_resnet12", subset_bands=["S2B4", "S2B3", "S2B2"])
-bag = BagOfMAML(basemodel)
+taskmodel = METEOR(basemodel)
 
 # fine-tune model to labelled data
 X_support, y_support = torch.rand(10, 3, 128, 128), torch.randint(3, (10,))
-bag.fit(X_support, y_support)
+taskmodel.fit(X_support, y_support)
 
 # predict
 X_query = torch.rand(10, 3, 128, 128)
-y_pred, y_scores = bag.predict(X_query)
+y_pred, y_scores = taskmodel.predict(X_query)
 ```
 
 ## (Coarse) Segmentation
 
 ```python
-from bagofmaml import BagOfMAML
-from bagofmaml import models
+from meteor import METEOR
+from meteor import models
 import torch
 
 # initialize an RGB model
 basemodel = models.get_model("maml_resnet12", subset_bands=["S2B4", "S2B3", "S2B2"], segmentation=True)
-bag = BagOfMAML(basemodel)
+taskmodel = METEOR(basemodel)
 
 # fine-tune model to labelled data
 X_support, y_support = torch.rand(10, 3, 128, 128), torch.randint(3, (10, 128, 128))
-bag.fit(X_support, y_support)
+taskmodel.fit(X_support, y_support)
 
 # predict
 X_query = torch.rand(10, 3, 128, 128)
-y_pred, y_scores = bag.predict(X_query)
+y_pred, y_scores = taskmodel.predict(X_query)
 ```
 
 
 ## Minimal Working Examples 
 
-require installation of extra packages for plotting via `pip install -e "git+https://github.com/marccoru/bagofmaml.git[examples]"`
+require installation of extra packages for plotting via `pip install -e "git+https://github.com/marccoru/meteor.git[examples]"`
 
 ### Beirut Example
 
@@ -59,9 +59,9 @@ require installation of extra packages for plotting via `pip install -e "git+htt
 
 ```python
 import torch
-from bagofmaml import BagOfMAML
-from bagofmaml import models
-from bagofmaml.examples.beirut import get_data, plot
+from meteor import METEOR
+from meteor import models
+from meteor.examples.beirut import get_data, plot
 
 # download data
 timeseries, dates_dt = get_data()
@@ -78,11 +78,11 @@ y_support = torch.hstack([torch.zeros(shot), torch.ones(shot)]).long()
 s2bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
            "S2B12"]
 model = models.get_model("maml_resnet12", subset_bands=s2bands)
-bag = BagOfMAML(model, verbose=True, inner_step_size=0.4, gradient_steps=20)
+taskmodel = METEOR(model, verbose=True, inner_step_size=0.4, gradient_steps=20)
 
 # fit and predict
-bag.fit(X_support, y_support)
-y_pred, y_score = bag.predict(timeseries)
+taskmodel.fit(X_support, y_support)
+y_pred, y_score = taskmodel.predict(timeseries)
 
 # plot score
 plot(y_score, dates_dt)

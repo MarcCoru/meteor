@@ -1,4 +1,4 @@
-name: bagofmaml
+name: meteor
 channels:
   - defaults
 dependencies:

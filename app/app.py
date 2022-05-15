@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 from flask import Flask, render_template, jsonify, request, send_file
 
-from bagofmaml import BagOfMAML
+from meteor import METEOR
 from data import get_marinedebris_accra, get_bandaranzali
 from model import get_model
 from utils import get_rgb
@@ -23,8 +23,8 @@ marinedebris_accra = torch.from_numpy(get_marinedebris_accra())
 bandar_anzali = torch.from_numpy(get_bandaranzali())
 
 model = get_model()
-bag = BagOfMAML(model, first_order=True, gradient_steps=gradient_steps, inner_step_size=inner_step_size,
-                verbose=True, device=device, batch_size=batch_size)
+bag = METEOR(model, first_order=True, gradient_steps=gradient_steps, inner_step_size=inner_step_size,
+             verbose=True, device=device, batch_size=batch_size)
 
 
 @app.route('/')

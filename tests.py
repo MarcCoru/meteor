@@ -1,7 +1,7 @@
 import unittest
 
-from bagofmaml import BagOfMAML
-from bagofmaml.models import ResNet, get_model
+from meteor import METEOR
+from meteor.models import ResNet, get_model
 import torch
 
 IMAGE_H, IMAGE_W = 32, 32
@@ -38,47 +38,47 @@ class Tests(unittest.TestCase):
         model = get_model("maml_resnet12", subset_bands=S2BANDS)
         self.assertFalse(model(torch.ones(1, 13, IMAGE_H, IMAGE_W)).isnan().any(), "NANs in model predictions")
 
-    def test_bagofmaml(self):
+    def test_meteor(self):
 
         basemodel = get_model("maml_resnet12", subset_bands=RGBBANDS)
-        bag = BagOfMAML(basemodel)
+        taskmodel = METEOR(basemodel)
 
-        bag.fit(torch.rand(BATCH_SIZE, 3, IMAGE_H, IMAGE_W), torch.randint(N_CLASSES, (BATCH_SIZE,)))
-        y_pred, y_score = bag.predict(torch.rand(BATCH_SIZE, N_CLASSES, IMAGE_H, IMAGE_W))
+        taskmodel.fit(torch.rand(BATCH_SIZE, 3, IMAGE_H, IMAGE_W), torch.randint(N_CLASSES, (BATCH_SIZE,)))
+        y_pred, y_score = taskmodel.predict(torch.rand(BATCH_SIZE, N_CLASSES, IMAGE_H, IMAGE_W))
         self.assertEqual(y_score.shape, torch.Size([N_CLASSES, BATCH_SIZE]))
 
-    def test_bagofmaml_segmentation(self):
+    def test_meteor_segmentation(self):
         basemodel = get_model("maml_resnet12", subset_bands=RGBBANDS, segmentation=True)
-        bag = BagOfMAML(basemodel)
-        bag.fit(torch.rand(BATCH_SIZE, 3, IMAGE_H, IMAGE_W), torch.randint(N_CLASSES, (BATCH_SIZE, IMAGE_H, IMAGE_W)))
-        y_pred, y_score = bag.predict(torch.rand(BATCH_SIZE, N_CLASSES, IMAGE_H, IMAGE_W))
+        taskmodel = METEOR(basemodel)
+        taskmodel.fit(torch.rand(BATCH_SIZE, 3, IMAGE_H, IMAGE_W), torch.randint(N_CLASSES, (BATCH_SIZE, IMAGE_H, IMAGE_W)))
+        y_pred, y_score = taskmodel.predict(torch.rand(BATCH_SIZE, N_CLASSES, IMAGE_H, IMAGE_W))
         self.assertEqual(y_score.shape, torch.Size([N_CLASSES, BATCH_SIZE, IMAGE_H, IMAGE_W]))
 
     def test_getting_started_examples_classification(self):
         # initialize an RGB model
         basemodel = get_model("maml_resnet12", subset_bands=["S2B4", "S2B3", "S2B2"])
-        bag = BagOfMAML(basemodel)
+        taskmodel = METEOR(basemodel)
 
         # fine-tune model to labelled data
         X_support, y_support = torch.rand(10, 3, 32, 32), torch.randint(3, (10,))
-        bag.fit(X_support, y_support)
+        taskmodel.fit(X_support, y_support)
 
         # predict
         X_query = torch.rand(10, 3, 32, 32)
-        y_pred, y_scores = bag.predict(X_query)
+        y_pred, y_scores = taskmodel.predict(X_query)
 
     def test_getting_started_examples_segmentation(self):
         # initialize an RGB model
         basemodel = get_model("maml_resnet12", subset_bands=["S2B4", "S2B3", "S2B2"], segmentation=True)
-        bag = BagOfMAML(basemodel)
+        taskmodel = METEOR(basemodel)
 
         # fine-tune model to labelled data
         X_support, y_support = torch.rand(10, 3, 32, 32), torch.randint(3, (10, 32, 32))
-        bag.fit(X_support, y_support)
+        taskmodel.fit(X_support, y_support)
 
         # predict
         X_query = torch.rand(10, 3, 32, 32)
-        y_pred, y_scores = bag.predict(X_query)
+        y_pred, y_scores = taskmodel.predict(X_query)
 
 
 if __name__ == '__main__':

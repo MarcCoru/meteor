@@ -53,8 +53,8 @@ def plot(y_score, dates_dt, savedir=None):
 
 def example():
     import torch
-    from bagofmaml import BagOfMAML
-    from bagofmaml import models
+    from meteor import METEOR
+    from meteor import models
 
     # download data
     timeseries, dates_dt = get_data()
@@ -69,11 +69,11 @@ def example():
 
     # get model
     model = models.get_model("maml_resnet12_s2")
-    bag = BagOfMAML(model, verbose=True, inner_step_size=0.32)
+    taskmodel = METEOR(model, verbose=True, inner_step_size=0.32)
 
     # fit and predict
-    bag.fit(X_support, y_support)
-    y_pred, y_score = bag.predict(timeseries)
+    taskmodel.fit(X_support, y_support)
+    y_pred, y_score = taskmodel.predict(timeseries)
 
     # plot score
     plot(y_score, dates_dt)

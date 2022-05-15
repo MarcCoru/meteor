@@ -14,17 +14,17 @@ env/bin/python serve.py
 
 CPU
 ```bash
-sudo docker run -p 8080:8080 marccoru/bagofmaml
+sudo docker run -p 8080:8080 marccoru/meteor
 ```
 
 GPU
 ```bash
-sudo nvidia-docker run -p 8080:8080 marccoru/bagofmaml
+sudo nvidia-docker run -p 8080:8080 marccoru/meteor
 ```
 
 ### Build
 
 ```bash
-sudo docker build -t marccoru/bagofmaml .
+sudo docker build -t marccoru/meteor .
 ```
 
