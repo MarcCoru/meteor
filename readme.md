@@ -1,4 +1,4 @@
-# Bag-of-MAML
+# METEOR
 
 ![](https://github.com/marccoru/meteor/actions/workflows/python-package-conda.yml/badge.svg)
 
