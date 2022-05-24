@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 inner_step_size = 0.32
 gradient_steps = 3
-batch_size = 8
+batch_size = 2
 num_images = 18
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
