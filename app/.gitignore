@@ -3,3 +3,4 @@ __pycache__
 env
 data
 model
+gpu_module/data

@@ -5,7 +5,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-
 class METEOR(nn.Module):
     def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu",
                  batch_size=8, activation="softmax", seed=0, mask=None):

@@ -1,7 +1,6 @@
 import numpy as np
 from skimage import exposure
 
-
 def get_rgb(s2):
     s2bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
                "S2B12"]
