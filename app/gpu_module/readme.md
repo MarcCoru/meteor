@@ -5,15 +5,13 @@ This is an isolated module for code to run on a GPU-enabled backend (separate fo
 ## Setup
 
 ```bash
-conda create -n gpu_module
-conda activate gpu_module
-conda install pip
-pip install -r requirements.txt
+docker build -t gpu_module .
 ```
 
 ## Run
+
 ```
-python main.py
+nvidia-docker run -t gpu_module python main.py
 ```
 to test the prediction for this module on demo data.
 
