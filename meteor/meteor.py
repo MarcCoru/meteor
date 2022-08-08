@@ -6,7 +6,7 @@ from torch import nn
 
 
 class METEOR(nn.Module):
-    def __init__(self, model, gradient_steps=1, inner_step_size=0.4, first_order=True, verbose=False, device="cpu",
+    def __init__(self, model, gradient_steps=60, inner_step_size=0.4, first_order=True, verbose=True, device="cpu",
                  batch_size=8, activation="softmax", seed=0):
         super(METEOR, self).__init__()
 
