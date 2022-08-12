@@ -39,9 +39,9 @@ class METEOR(nn.Module):
     @torch.no_grad()
     def predict(self, x, batch_size=16):
         if self.mode == "one_vs_all":
-            self.predict_one_vs_all(x, batch_size)
+            return self.predict_one_vs_all(x, batch_size)
         elif self.mode == "one_vs_one":
-            self.predict_one_vs_one(x, batch_size)
+            return self.predict_one_vs_one(x, batch_size)
 
     def fit_one_vs_all(self, X, Y):
         self.labels = np.unique(Y)
