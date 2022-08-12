@@ -153,7 +153,8 @@ class METEOR(nn.Module):
         votes = {str(k): [] for k in self.labels}
         with torch.no_grad():
             for combination, param in self.params.items():
-                print(f"predictioning combination {combination}")
+                if self.verbose:
+                    print(f"predicting class combination {combination}")
                 source, target = combination.split("-")
                 param = OrderedDict({k: v.to(self.device) for k, v in param.items()})
                 logit = torch.vstack(
