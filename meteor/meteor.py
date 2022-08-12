@@ -7,7 +7,7 @@ from torch import nn
 
 class METEOR(nn.Module):
     def __init__(self, model, gradient_steps=60, inner_step_size=0.4, first_order=True, verbose=True, device="cpu",
-                 batch_size=8, activation="softmax", seed=0):
+                 batch_size=8, activation="softmax", seed=0, mode="one_vs_all"):
         super(METEOR, self).__init__()
 
         assert mode in ["one_vs_all", "one_vs_one"]
@@ -76,7 +76,7 @@ class METEOR(nn.Module):
             self.params.append(param)
 
     def fit_one_vs_one(self, X_all, Y_all):
-        self.labels = np.unique(Y)
+        self.labels = np.unique(Y_all)
         self.model.train()
 
         torch.manual_seed(self.seed)
@@ -114,7 +114,7 @@ class METEOR(nn.Module):
                             if self.verbose:
                                 train_logit = self.model(X[idxs].float().to(self.device), params=param)
                                 loss_after_adaptation = F.binary_cross_entropy_with_logits(train_logit.squeeze(1),
-                                                                                           Y[idxs].to(device))
+                                                                                           Y[idxs].to(self.device))
                                 print(
                                     f"adapting to class {source_class}-{target_class} with {X.shape[0]} samples: step {t}/{self.gradient_steps}: support loss {inner_loss:.2f} -> {loss_after_adaptation:.2f}")
 
