@@ -93,7 +93,7 @@ class METEOR(nn.Module):
                 if source_class != target_class:
 
                     # skip B-A classifier if A-B already trained
-                    if not f"{target_class}-{source_class}" in params.keys():
+                    if not f"{target_class}-{source_class}" in self.params.keys():
 
                         X_source = X_all[(Y_all == source_class)]
                         X_target = X_all[(Y_all == target_class)]
