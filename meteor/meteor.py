@@ -85,7 +85,7 @@ class METEOR(nn.Module):
         self.model.to(self.device)
 
         # to be filled by self.fit()
-        params = {}
+        self.params = {}
         for source_class in self.labels:
             for target_class in self.labels:
 
@@ -120,7 +120,7 @@ class METEOR(nn.Module):
 
                         # move to cpu to save memory
                         param = OrderedDict({k: v.cpu() for k, v in param.items()})
-                        params[f"{source_class}-{target_class}"] = param
+                        self.params[f"{source_class}-{target_class}"] = param
 
     @torch.no_grad()
     def predict_one_vs_all(self, x, batch_size=16):
