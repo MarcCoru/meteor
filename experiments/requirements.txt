@@ -1,0 +1,16 @@
+torch==1.9.1
+torchmeta==1.8.0
+torchvision==0.10.1
+tqdm
+scikit-learn
+PyYAML
+pandas
+rasterio
+albumentations
+timm
+einops
+diffdist
+matplotlib
+Orange3==3.30
+numba
+geopandas
