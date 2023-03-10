@@ -18,9 +18,9 @@ def add_b1b9b10_zerobands(arr):
 
 
 class Anthroprotect(Dataset):
-    def __init__(self, root):
+    def __init__(self, root, samplesize=1000, random_state=0):
         self.root = root
-        self.index = pd.read_csv(os.path.join(root, "infos.csv")).sample(1000, random_state=0)
+        self.index = pd.read_csv(os.path.join(root, "infos.csv")).sample(samplesize, random_state=random_state)
         self.index = self.index.reset_index(drop=True).reset_index()
 
     def __len__(self):

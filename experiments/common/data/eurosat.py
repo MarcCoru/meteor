@@ -55,14 +55,14 @@ def split_support_query(ds, shots, at_least_n_queries=0, random_state=0):
 
     return supports, queries
 
-def get_data(datapath, shots=5, random_state=0):
+def get_data(datapath, shots=5, random_state=0, num_samples=1000):
     ds = EuroSat(datapath)
     classnames = ds.labels
 
     support, query = split_support_query(ds, shots, random_state)
 
     # dataset is very large subsample to make it runnable
-    query = query.sample(1000, random_state=0)
+    query = query.sample(num_samples, random_state=random_state)
 
     def load_samples(ds, dataframe):
         data_input, data_target = [], []

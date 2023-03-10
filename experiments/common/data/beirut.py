@@ -11,7 +11,7 @@ bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B1
 
 
 def get_data_raw():
-    folder = "/data/bagofmaml/data/beirut"
+    folder = "/data/meteor-paper/data/beirut"
     files = [f for f in os.listdir(folder) if f.endswith(".tif")]
 
     idxs = np.array([bands.index(b) for b in ["TCI_R", "TCI_G", "TCI_B"]])

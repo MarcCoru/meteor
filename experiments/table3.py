@@ -82,7 +82,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} baseline - ResNet50")
     model = get_model(modelname="baseline-resnet50",
-                      snapshot_path=config["models"]["baseline"]["resnet50"],
+                      snapshot_path=config["models"]["baseline"]["resnet50"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -95,7 +95,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} baseline - ResNet18")
     model = get_model(modelname="baseline-resnet18",
-                      snapshot_path=config["models"]["baseline"]["resnet18"],
+                      snapshot_path=config["models"]["baseline"]["resnet18"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -107,7 +107,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} baseline - ResNet12")
     model = get_model(modelname="baseline-resnet12",
-                      snapshot_path=config["models"]["baseline"]["resnet12"],
+                      snapshot_path=config["models"]["baseline"]["resnet12"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -119,7 +119,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} SSL4EO - dinorn50")
     model = get_model(modelname="ssl4eo-dinorn50",
-                      snapshot_path=config["models"]["ssl4eo"]["dinorn50"],
+                      snapshot_path=config["models"]["ssl4eo"]["dinorn50"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
     protomodel = PrototypicalWrapper(model)
@@ -132,7 +132,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} SSL4EO - ResNet50")
     model = get_model(modelname="ssl4eo-mocorn50",
-                      snapshot_path=config["models"]["ssl4eo"]["mocorn50"],
+                      snapshot_path=config["models"]["ssl4eo"]["mocorn50"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -175,7 +175,7 @@ def run_task(name, resultsdir, shots=5):
     ## SSLTransformerRS - Swin-T
     print(f"{name} SSLTransformerRS - Swin-T")
     model = get_model(modelname="ssltransformerrs-swin",
-                      snapshot_path=config["models"]["ssltransformerrs"]["swin"],
+                      snapshot_path=config["models"]["ssltransformerrs"]["swin"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -189,7 +189,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} SSLTransformerRS - ResNet50")
     model = get_model(modelname="ssltransformerrs-resnet50",
-                      snapshot_path=config["models"]["ssltransformerrs"]["resnet50"],
+                      snapshot_path=config["models"]["ssltransformerrs"]["resnet50"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -202,7 +202,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} SSLTransformerRS - ResNet18")
     model = get_model(modelname="ssltransformerrs-resnet18",
-                      snapshot_path=config["models"]["ssltransformerrs"]["resnet18"],
+                      snapshot_path=config["models"]["ssltransformerrs"]["resnet18"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
 
@@ -216,7 +216,7 @@ def run_task(name, resultsdir, shots=5):
     ## Prototypical Network
     print(f"{name} Proto")
     model = get_model(modelname="proto",
-                      snapshot_path=config["models"]["proto"]["model"],
+                      snapshot_path=config["models"]["proto"]["model"]["path"],
                       inplanes=dataconfig["inplanes"],
                       select_bands=dataconfig["select_bands"])
     protomodel = PrototypicalWrapper(model)
@@ -232,7 +232,7 @@ def run_task(name, resultsdir, shots=5):
 
     ## Seasonal Contrast
     model = get_model(modelname="seco_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=dataconfig["inplanes"])
     protomodel = PrototypicalWrapper(model)
     print(f"{name} SeCo")
@@ -245,7 +245,7 @@ def run_task(name, resultsdir, shots=5):
     print(f"{name} DINO")
     ## DINO
     model = get_model(modelname="dino_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=dataconfig["inplanes"])
     protomodel = PrototypicalWrapper(model)
 
@@ -257,7 +257,7 @@ def run_task(name, resultsdir, shots=5):
     print(f"{name} Swav")
     ## DINO
     model = get_model(modelname="swav_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=dataconfig["inplanes"])
     protomodel = PrototypicalWrapper(model)
 
@@ -269,7 +269,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} Imagenet")
     model = get_model(modelname="imagenet_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=dataconfig["inplanes"])
     protomodel = PrototypicalWrapper(model)
 
@@ -280,7 +280,7 @@ def run_task(name, resultsdir, shots=5):
 
     print(f"{name} random")
     model = get_model(modelname="scratch_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=dataconfig["inplanes"])
     protomodel = PrototypicalWrapper(model)
 

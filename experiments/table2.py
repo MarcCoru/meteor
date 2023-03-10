@@ -42,7 +42,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
 
     print(f"SSL4EO - ResNet50")
     model = get_model(modelname="ssl4eo-mocorn50",
-                      snapshot_path=config["models"]["ssl4eo"]["mocorn50"],
+                      snapshot_path=config["models"]["ssl4eo"]["mocorn50"]["path"],
                       inplanes=13,
                       select_bands=bands)
 
@@ -54,7 +54,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
 
     print(f"SSLTransformerRS - ResNet50")
     model = get_model(modelname="ssltransformerrs-resnet50",
-                      snapshot_path=config["models"]["ssltransformerrs"]["resnet50"],
+                      snapshot_path=config["models"]["ssltransformerrs"]["resnet50"]["path"],
                       inplanes=13,
                       select_bands=bands)
 
@@ -81,7 +81,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
 
     print(f"baseline - ResNet18")
     model = get_model(modelname="baseline-resnet18",
-                      snapshot_path=config["models"]["baseline"]["resnet18"],
+                      snapshot_path=config["models"]["baseline"]["resnet18"]["path"],
                       inplanes=13,
                       select_bands=bands)
 
@@ -99,7 +99,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
     ## Seasonal Contrast
     print(f"SeCo")
     model = get_model(modelname="seco_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=3)
     protomodel = PrototypicalWrapper(model)
     protomodel.fit(support_input, support_target)
@@ -110,7 +110,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
     print(f"Swav")
     ## DINO
     model = get_model(modelname="swav_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=3)
     protomodel = PrototypicalWrapper(model)
 
@@ -122,7 +122,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
     print(f"DINO")
     ## DINO
     model = get_model(modelname="dino_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=3)
     protomodel = PrototypicalWrapper(model)
 
@@ -134,7 +134,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
 
     print(f"Imagenet")
     model = get_model(modelname="imagenet_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=3)
     protomodel = PrototypicalWrapper(model)
 
@@ -145,7 +145,7 @@ def test_models(support_input, support_target, query_input, query_target, outfol
 
     print(f"random")
     model = get_model(modelname="scratch_resnet50",
-                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"],
+                      snapshot_path=config["models"]["seco_resnet50"]["rgbonly"]["path"],
                       inplanes=3)
     protomodel = PrototypicalWrapper(model)
 
