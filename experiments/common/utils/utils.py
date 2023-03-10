@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-import numpy as np
 from .transforms import get_classification_transform
 from .model import prepare_classification_model
 from .data import IGBP_simplified_classes
@@ -30,61 +28,6 @@ def prepare_transform_and_model(args):
 
 
     return transform, model, mask, mask_optimizer
-
-
-def tensorboard_batch_figure(batch, summary_writer, classes, targets, predictions, imgsize=4, global_step=None):
-    train_img, train_label, train_ids = batch["train"]
-    test_img, test_label, test_ids = batch["test"]
-
-    # infer batch_size, shots, ways from the data
-    batch_size = train_label.shape[0]
-    unique_classes, count_per_class = train_label[0].unique(return_counts=True)
-    num_ways = len(unique_classes)
-    num_shots = int(count_per_class[0])
-    assert num_ways * num_shots == train_label.shape[1]
-
-    for task_id in range(batch_size):
-        fig, axs = plt.subplots(2, num_shots * num_ways,
-                                figsize=(num_shots * num_ways * imgsize, 2 * imgsize),
-                                sharey=True)
-
-        np.array(classes)[targets].reshape(batch_size, -1)
-
-        #### First Row: Support
-        axs_row = axs[0]
-
-        rgb_images = np.stack([to_rgb(image) for image in train_img[task_id]])
-        id = np.array(train_ids)[:, task_id]
-        train_label_row = train_label[task_id]
-        train_label_row = np.array(classes)[train_label_row]
-
-        for ax, image, id_, target in zip(axs_row, rgb_images, id, train_label_row):
-            ax.imshow(image)
-            ax.get_xaxis().set_ticks([])
-            ax.get_yaxis().set_ticks([])
-            ax.set_title(f"{target}")
-        axs_row[0].set_ylabel("support")
-
-        #### Second Row: Query
-        axs_row = axs[1]
-
-        targets_row = targets.reshape(batch_size, -1)[task_id]
-        predictions_row = predictions.reshape(batch_size, -1)[task_id]
-
-        targets_row = np.array(classes)[targets_row]
-        predictions_row = np.array(classes)[predictions_row]
-
-        rgb_images = np.stack([to_rgb(image) for image in test_img[task_id]])
-        id = np.array(test_ids)[:, task_id]
-        for ax, image, target, prediction in zip(axs_row, rgb_images, targets_row, predictions_row):
-            ax.imshow(image)
-            ax.get_xaxis().set_ticks([])
-            ax.get_yaxis().set_ticks([])
-            ax.set_title(f"{target} (pred {prediction})")
-        axs_row[0].set_ylabel("query")
-
-        name = f"Region {id[0].split('/')[1]} ({id[0].split('/')[0]})"
-        summary_writer.add_figure(f"meta-test: {name}", figure=fig, global_step=global_step)
 
 def update_parameters(model, loss, params=None, mask=None, inner_step_size=0.5, first_order=False):
     """Update the parameters of the model, with one step of gradient descent.

@@ -2,9 +2,9 @@ import os
 import rasterio as rio
 
 import numpy as np
-import matplotlib.pyplot as plt
 import datetime
 import torch
+import urllib
 
 bands = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B11", "B12", "AOT", "WVP", "SCL", "TCI_R",
          "TCI_G", "TCI_B", "MSK_CLDPRB", "MSK_SNWPRB", "QA10", "QA20", "QA60"]

@@ -139,7 +139,7 @@ class DoubleResNetSimCLRDownstream(torch.nn.Module):
         try:
             model = self.resnet_dict[model_name]
         except KeyError:
-            raise InvalidBackboneError(
+            raise ValueError(
                 "Invalid backbone architecture. Check the config file and pass one of: resnet18 or resnet50")
         else:
             return model

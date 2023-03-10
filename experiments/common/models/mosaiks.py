@@ -13,10 +13,16 @@ from common.dfc2020.data import DFCDataset, split_support_query
 from common.utils.transforms import get_classification_transform
 from common.data.allsen12ms import AllSen12MSDataset
 
+
 import torch
 from tqdm import tqdm
 import os
 from datetime import datetime
+
+"""
+Code adapted from https://github.com/Global-Policy-Lab/mosaiks-paper
+https://github.com/Global-Policy-Lab/mosaiks-paper/blob/7efb09ed455505562d6bb04c2aaa242ef59f0a82/code/mosaiks/featurization.py
+"""
 
 MAX_THREADS = 1
 TOT_PATCHES = int(1e5)
@@ -69,7 +75,7 @@ def build_local_featurizer(support_input, patch_distribution="empirical"):
     return featurizer
 
 def fit_predict_mosaiks(support_input, support_target, query_input, query_target, semi_supervised=False,
-                        local_features=True, select_bands=None, patch_distribution="empirical"):
+                        local_features=True, select_bands=None, patch_distribution="empirical", gpu = True):
     X_train = support_input  # only training partition
     X = torch.vstack([support_input, query_input])  # all
 
@@ -86,7 +92,6 @@ def fit_predict_mosaiks(support_input, support_target, query_input, query_target
     data_batchsize = 128
     num_filters = None
     filter_batch_size = None
-    gpu = True
     rgb = True
     filterbatch_size = 16
 
@@ -297,6 +302,7 @@ class BasicCoatesNgNet(nn.Module):
             pool_stride=2,
             bias=1.0,
             filter_batch_size=1024,
+            gpu=True
     ):
         super().__init__()
         self.pool_size = pool_size
@@ -309,7 +315,7 @@ class BasicCoatesNgNet(nn.Module):
         self.active_filter_set = []
         self.start = None
         self.end = None
-        self.gpu = False
+        self.gpu = gpu
 
     def _forward(self, x):
         # Max pooling over a (2, 2) window
@@ -480,43 +486,6 @@ def normalize_patches(
     patches_normalized = (patches).dot(global_ZCA).dot(global_ZCA.T)
 
     return patches_normalized.reshape(orig_shape).astype("float32")
-
-
-def coatesng_featurize(
-        net,
-        dataset,
-        data_batchsize=128,
-        num_filters=None,
-        filter_batch_size=None,
-        gpu=False,
-        rgb=True,
-):
-    net.use_gpu = gpu
-    if filter_batch_size is None:
-        filter_batch_size = net.filter_batch_size
-    if num_filters is None:
-        num_filters = len(net.filters)
-    X_lift_full = []
-
-    for start, end in chunk_idxs_by_size(num_filters, filterbatch_size):
-        data_loader = torch.utils.data.DataLoader(dataset, batch_size=data_batchsize)
-        X_lift_batch = []
-        print(f"generating features {start} to {end}")
-        names = []
-        with tqdm(total=len(dataset)) as pbar:
-            for X_batch_named in data_loader:
-                X_batch = X_batch_named[1]
-                if gpu:
-                    X_batch = X_batch.cuda()
-                X_var = X_batch
-                names += [x for x in X_batch_named[0]]
-                X_lift = net.forward_partial(X_var, start, end).cpu().data.numpy()
-                X_lift_batch.append(X_lift)
-                pbar.update(X_lift.shape[0])
-        X_lift_full.append(np.concatenate(X_lift_batch, axis=0))
-    conv_features = np.concatenate(X_lift_full, axis=1)
-    net.deactivate()
-    return conv_features.reshape(len(dataset), -1), names
 
 
 if __name__ == '__main__':

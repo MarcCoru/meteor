@@ -37,6 +37,8 @@ def get_model(modelname, snapshot_path, inplanes, select_bands=None):
         model = METEOR(basemodel, verbose=False, device="cuda")
 
     elif modelname == "ssl4eo-dinorn50":
+        ''' model from https://github.com/zhu-xlab/SSL4EO-S12 '''
+
         state_dict = torch.load(snapshot_path)["teacher"]
 
         state_dict = OrderedDict(
@@ -60,6 +62,8 @@ def get_model(modelname, snapshot_path, inplanes, select_bands=None):
         model.load_state_dict(state_dict)
 
     elif modelname == "ssl4eo-mocorn50":
+        ''' model from https://github.com/zhu-xlab/SSL4EO-S12 '''
+
         state_dict = torch.load(snapshot_path)["state_dict"]
 
         state_dict = OrderedDict(

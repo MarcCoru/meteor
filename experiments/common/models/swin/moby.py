@@ -11,10 +11,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+'''
 # import torch.distributed as dist
-
-from diffdist import functional
-
+# from diffdist import functional
 
 def dist_collect(x):
     """collect all tensor from all GPUs
@@ -30,7 +30,7 @@ def dist_collect(x):
     ]
     out_list = functional.all_gather(out_list, x)
     return torch.cat(out_list, dim=0).contiguous()
-
+'''
 
 class MoBY(nn.Module):
     def __init__(

@@ -50,57 +50,6 @@ class BandEncoder(MetaModule):
         # forward takes (82 milli seconds with an [10, 13, 256, 256] image)
         return temporary_encoder(inputs, params=self.get_subdict(params, "encoder"))
 
-class DynamicResNet(MetaModule):
-    def __init__(self):
-        super(DynamicResNet, self).__init__()
-        self.band_encoder = BandEncoder(out_features=32)
-        self.feature_model = ResNet(inplanes=32, out_features=1, normtype="instancenorm", avg_pool=True)
-
-    def forward(self, inputs, params=None):
-        features = self.band_encoder(inputs, params=self.get_subdict(params, "band_encoder"))
-        return self.feature_model(features, params=self.get_subdict(params, "feature_model"))
-
-def conv3x3(in_channels, out_channels, no_batchnorm=False, track_running_stats=False, **kwargs):
-    return MetaSequential(
-        MetaConv2d(in_channels, out_channels, kernel_size=3, padding=1, **kwargs),
-        MetaBatchNorm2d(out_channels, momentum=1., track_running_stats=track_running_stats) if not no_batchnorm else nn.InstanceNorm2d(out_channels),
-        nn.ReLU(),
-        nn.MaxPool2d(2)
-    )
-
-class ConvolutionalNeuralNetwork(MetaModule):
-    def __init__(self, in_channels, out_features, input_size=128, hidden_size=64, inner_update_lr_init=None, no_batchnorm=False, track_running_stats=False):
-        super(ConvolutionalNeuralNetwork, self).__init__()
-        self.in_channels = in_channels
-        self.out_features = out_features
-        self.hidden_size = hidden_size
-
-        self.features = MetaSequential(
-            conv3x3(in_channels, hidden_size, no_batchnorm=no_batchnorm, track_running_stats=track_running_stats),
-            *[conv3x3(hidden_size, hidden_size, no_batchnorm=no_batchnorm) for _ in range(int(math.log2(input_size) - 1))]
-        )
-
-        self.classifier = MetaLinear(hidden_size, out_features)
-
-        # additional config parameters of MAML++
-        if inner_update_lr_init is not None:
-            self.learning_rates = self.add_learning_rate_parameters(inner_update_lr_init)
-
-    """MAML++ feature of learning inner learning rates on the fly"""
-    def add_learning_rate_parameters(self, inner_update_lr_init):
-        parameter_names = [x[0].replace('.', '-') for x in list(self.named_parameters())]
-        return nn.ParameterDict({
-            x: torch.nn.Parameter(torch.FloatTensor([inner_update_lr_init]),
-                                                         requires_grad=True)
-            for x in parameter_names
-        })
-
-    def forward(self, inputs, params=None):
-        features = self.features(inputs, params=self.get_subdict(params, 'features'))
-        features = features.mean([2,3])
-        logits = self.classifier(features, params=self.get_subdict(params, 'classifier'))
-        return logits
-
 #################
 ### ResNet-12 ###
 #################
@@ -363,16 +312,3 @@ class ResNet(MetaModule):
             features = x
         return self.classifier(self.dropout(features),
                                params=get_subdict(params, 'classifier'))
-
-if __name__ == '__main__':
-    from collections import OrderedDict
-
-    model = UNet(n_channels=15, n_classes=20)
-
-    x = torch.rand(16, 15, 256, 256)
-    model.forward(x)
-
-    params = OrderedDict()
-    for name, param in model.meta_named_parameters():
-        params[name] = param
-    model.forward(x, params=params)

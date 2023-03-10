@@ -35,7 +35,11 @@ def normalize(img, mean, std):
     return img
 
 
-def get_norm(bands, select_bands):
+def get_norm_paper(bands, select_bands):
+    '''
+    we tested the normalization in the original SSL4RS code, but found that it did not work better than constant
+    scaling with 1e-4 (get_norm function)
+    '''
 
     # e.g. remove S2 from "S2B1" to make band names match across different datasets
     s = [s.replace("S2","") for s in select_bands]
@@ -49,3 +53,7 @@ def get_norm(bands, select_bands):
             b.append(torch.from_numpy(normalized_x))
         return torch.stack(b).float() / 255.
     return norm_s2maxs
+
+
+def get_norm(bands, select_bands):
+    return lambda x: x # i.e., constant 1e-4 scaling
