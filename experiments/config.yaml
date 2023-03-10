@@ -1,0 +1,60 @@
+models:
+  bagofmaml:
+    model: "/data/sen12ms/models/izar/bs/maml_bs16/model_best.pth"
+    s2only: "/data/sen12ms/models/izar/modality/maml_s2/model_best.pth"
+    rgbonly: "/data/sen12ms/models/izar/modality/maml_rgb/model_best.pth"
+  proto:
+    model: "/data/sen12ms/models/proto_s2only/model_best.pth"
+    s2only: "/data/sen12ms/models/proto_s2only/model_best.pth"
+    rgbonly: "/data/sen12ms/models/proto_rgb/model_best.pth"
+  seco_resnet50:
+    rgbonly: "/data/sen12ms/models/seco/seco_resnet50_1m_state_dict.ckpt"
+  seco_resnet18:
+    rgbonly: "/data/sen12ms/models/seco/seco_resnet18_1m.ckpt"
+  ssltransformerrs:
+    resnet50: "/data/sen12ms/models/ssltransformerrs/ResNet50.pth"
+    resnet18: "/data/sen12ms/models/ssltransformerrs/ResNet18.pth"
+    swin: "/data/sen12ms/models/ssltransformerrs/Swin-t.pth"
+  baseline:
+    resnet50: "/data/sen12ms/models/baseline/resnet50/model.ckpt"
+    resnet18: "/data/sen12ms/models/baseline/resnet18/model.ckpt"
+    resnet12: "/data/sen12ms/models/baseline/resnet12/model.ckpt"
+  ssl4eo:
+    mocorn50: "/data/sen12ms/models/SSL4EO-S12/B13_rn50_moco_0099.pth"
+    dinorn50: "/data/sen12ms/models/SSL4EO-S12/B13_rn50_dino_0099.pth.tar"
+
+data:
+  anthroprotect:
+    datapath: "/data/bagofmaml/data/anthroprotect/anthroprotect/"
+    inplanes: 13
+    rgb_bands: ["B4", "B3", "B2"]
+    select_bands: ["S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B11", "S2B12"]
+  eurosat:
+    datapath: "/data/bagofmaml/data/eurosat"
+    inplanes: 13
+    rgb_bands: [ "S2B4", "S2B3", "S2B2" ]
+    select_bands: ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+               "S2B12"]
+  dfc2020:
+    datapath: "/data/sen12ms/DFC_Public_Dataset"
+    inplanes: 13
+    rgb_bands: [ "S2B4", "S2B3", "S2B2" ]
+    select_bands: ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11", "S2B12"]
+  nwpuresisc45:
+    datapath: "/data/NWPU-RESISC45"
+    inplanes: 3
+    rgb_bands: ["S2B4", "S2B3", "S2B2"]
+    select_bands: ["S2B4", "S2B3", "S2B2"]
+  floatingobjects:
+    datapath: "/data/floatingobjects/data"
+    inplanes: 13
+    rgb_bands: ["B4", "B3", "B2"]
+    select_bands: ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B11", "S2B12"]
+  denethor:
+    datapath: "/data/bagofmaml/data/dlr_fusion_competition_germany"
+    inplanes: 3
+    rgb_bands: ["S2B4", "S2B3", "S2B2"]
+    select_bands: ["S2B4", "S2B3", "S2B2","S2B8"]
+
+results:
+  table2resultsfolder: 'results/table2'
