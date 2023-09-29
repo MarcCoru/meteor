@@ -5,3 +5,4 @@ meteor.egg-info
 data.npz
 venv
 build
+.DS_Store
