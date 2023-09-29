@@ -93,3 +93,4 @@ data:
 results:
   table2resultsfolder: '/data/meteor-paper/results/table2'
   table3resultsfolder: '/data/meteor-paper/results/table3'
+  runtimeresultsfolder: '/data/meteor-paper/results/runtime'

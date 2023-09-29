@@ -68,8 +68,11 @@ def example():
     y_support = torch.hstack([torch.zeros(shot), torch.ones(shot)]).long()
 
     # get model
-    model = models.get_model("maml_resnet12_s2")
-    taskmodel = METEOR(model, verbose=True, inner_step_size=0.32)
+    # get model
+    s2bands = ["S2B1", "S2B2", "S2B3", "S2B4", "S2B5", "S2B6", "S2B7", "S2B8", "S2B8A", "S2B9", "S2B10", "S2B11",
+               "S2B12"]
+    model = models.get_model("maml_resnet12", subset_bands=s2bands)
+    taskmodel = METEOR(model, verbose=True, inner_step_size=0.4, gradient_steps=20)
 
     # fit and predict
     taskmodel.fit(X_support, y_support)
@@ -77,3 +80,7 @@ def example():
 
     # plot score
     plot(y_score, dates_dt)
+
+if __name__ == '__main__':
+    example()
+    plt.show()

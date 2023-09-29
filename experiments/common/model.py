@@ -30,11 +30,11 @@ def reset_indices(targets):
     return torch.stack(rows)
 
 
-def get_model(modelname, snapshot_path, inplanes, select_bands=None):
+def get_model(modelname, snapshot_path, inplanes, select_bands=None, device="cuda"):
 
     if modelname == "meteor":
         basemodel = meteormodels.get_model("maml_resnet12", subset_bands=select_bands)
-        model = METEOR(basemodel, verbose=False, device="cuda")
+        model = METEOR(basemodel, verbose=False, device=device)
 
     elif modelname == "ssl4eo-dinorn50":
         ''' model from https://github.com/zhu-xlab/SSL4EO-S12 '''
