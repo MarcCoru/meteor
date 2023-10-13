@@ -87,3 +87,12 @@ y_pred, y_score = taskmodel.predict(timeseries)
 # plot score
 plot(y_score, dates_dt)
 ```
+
+## Training METEOR
+
+the main training script is located in [`train/main.py`](./train/main.py)
+
+call it via
+```
+python train/main.py --start-from-pretrained
+```
