@@ -5,7 +5,6 @@ import h5py
 import numpy as np
 import pandas as pd
 import rasterio
-import torch
 
 from torch.utils.data.sampler import RandomSampler
 from torchmeta.transforms import ClassSplitter

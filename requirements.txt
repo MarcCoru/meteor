@@ -1,4 +1,9 @@
-torch==2.0.0
+torch>=1.9.2
 torchvision>=0.10.1
 tqdm
 ordered-set
+scikit-learn
+rasterio
+h5py
+numpy
+pandas

@@ -245,6 +245,12 @@
          */
     }
 
+    /*
+    function reset(){
+        location.reload();
+    }
+    */
+
     function reset() {
         // delete everything in the canvas
         d3.select('svg').selectAll('*').remove();
@@ -269,7 +275,6 @@
         simulation.force("charge", d3.forceManyBody().strength(-20));
         document.getElementById("btn").innerHTML = "done!"
     }
-
 
     get_nodes()
     updateInfo()

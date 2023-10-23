@@ -96,3 +96,17 @@ call it via
 ```
 python train/main.py --start-from-pretrained
 ```
+
+## Demo Application
+
+run app
+
+```
+cd app
+
+# install python and requirements
+bash setup.sh
+
+# start server
+env/bin/python serve.py
+```

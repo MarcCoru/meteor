@@ -14,16 +14,18 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
-    - name: Add conda to system path
+    - name: Set up venv
       run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+        pip install --upgrade pip
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
     - name: Install dependencies
       run: |
-        conda env update --file environment.yml --name base
+        pip install -r requirements.txt
     - name: Lint with flake8
       run: |
-        conda install flake8 importlib_metadata
+        pip install flake8 importlib_metadata
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
