@@ -1,6 +1,6 @@
 # Deforestation Data
 
-<img src=deforestfigure.png>
+<img width=400px src=deforestfigure.png>
 
 The PlanetScope deforestation dataset was obtained at no cost through the [Research & Education Plan](https://www.planet.com/markets/education-and-research).
 
@@ -20,6 +20,13 @@ we downloaded the scenes
 * 202109_psscene_analytic_sr_udm2
 * 202201_psscene_analytic_sr_udm2
 
+to download the data 
+1. create a PlanetScope account and click on the link above
+it will
+<img src="./Explorer-Site-1.png">
+2. select the dates listed above on the left panel
+3. order the scenes and download when ready
+
 ## Evaluation site 2 (bottom two panels) were queried following this url
 
 > [https://www.planet.com/explorer/#/cloud_cover/0,0/interval/1%20day/area-coverage/1,1/center/-60.632,0.683/zoom/14.2/dates//geometry/POLYGON((-60.658647+0.67023,-60.572709+0.67023,-60.572709+0.699999,-60.658647+0.699999,-60.658647+0.67023))/items/PSScene%3A20210915_133527_0e26,PSScene%3A20210915_133526_0e26](https://www.planet.com/explorer/#/cloud_cover/0,0/interval/1%20day/area-coverage/1,1/center/-60.632,0.683/zoom/14.2/dates//geometry/POLYGON((-60.658647+0.67023,-60.572709+0.67023,-60.572709+0.699999,-60.658647+0.699999,-60.658647+0.67023))/items/PSScene%3A20210915_133527_0e26,PSScene%3A20210915_133526_0e26)
@@ -27,3 +34,10 @@ we downloaded the scenes
 * 220170212_psscene_analytic_sr_udm2 (top image)
 * 220210915_psscene_analytic_sr_udm2 (center image)
 * 220220111_psscene_analytic_sr_udm2 (bottom image)
+
+to download the data 
+1. create a PlanetScope account and click on the link above
+it will
+<img src="./Explorer-Site-2.png">
+2. select the dates listed above on the left panel
+3. order the scenes and download when ready
