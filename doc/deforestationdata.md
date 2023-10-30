@@ -22,7 +22,7 @@ we downloaded the scenes
 
 to download the data 
 1. create a PlanetScope account and click on the link above
-it will
+it will show the following panel
 <img src="./Explorer-Site-1.png">
 2. select the dates listed above on the left panel
 3. order the scenes and download when ready
@@ -37,7 +37,7 @@ it will
 
 to download the data 
 1. create a PlanetScope account and click on the link above
-it will
+it will show the following panel
 <img src="./Explorer-Site-2.png">
 2. select the dates listed above on the left panel
 3. order the scenes and download when ready
