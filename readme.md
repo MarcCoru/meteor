@@ -2,6 +2,8 @@
 
 ![](https://github.com/marccoru/meteor/actions/workflows/python-package-conda.yml/badge.svg)
 
+> **Note** Due to many downloads and high associated costs, I had to set the AWS s3 storage of data and models to private. Please email marc . russwurm (at) wur.nl if you need access to the data and models!
+
 ## Install Package and Requirements
 
 ```commandline
